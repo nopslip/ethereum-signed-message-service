@@ -1,1 +1,1 @@
-web: gunicorn run:my_awesome_app
+web: gunicorn run:gtc_sig_app
