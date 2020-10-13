@@ -22,16 +22,17 @@ def get_signature():
     headers = request.headers
     gtc_sig_app.logger.info(f'HEADERS:{headers}')
     
-    dict = request.get_json
-    gtc_sig_app.logger.info(f'POST BODY DATA:{dict}')
-
+    json_request = request.get_json
+    gtc_sig_app.logger.info(f'POST BODY DATA:{json_request}')
+    
+    '''
     for key in dict:
         print(f'form key - {key}')
         print(f'key value - {dict[key]}')
-
+    '''
     print(f'GTC_SIG_KEY: {os.environ.get("GTC_SIG_KEY")}')
     
-    computed_hash = create_sha256_signature(GTC_SIG_KEY, json.dumps(dict))
+    computed_hash = create_sha256_signature(GTC_SIG_KEY, json.dumps(json_request))
     
     gtc_sig_app.logger.info(f'COMPUTED HASH: {computed_hash}')
 
