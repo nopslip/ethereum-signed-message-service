@@ -14,11 +14,7 @@ def get_signature():
     
     dict = request.form
     for key in dict:
-        print 'form key '+dict[key]
-
+        print(f'form key {dict[key]}')
     
-    
-
-
 if __name__ == '__main__':
     gtc_sig_app.run()
