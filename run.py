@@ -1,6 +1,5 @@
 from flask import Flask
 from flask import request
-from flask_api import status
 
 gtc_sig_app = Flask(__name__)
 
@@ -17,8 +16,8 @@ def get_signature():
     for key in dict:
         print(f'form key {dict[key]}')
     
-    content = "yah!"
-    return content, status.HTTP_200_OK
+    return "yah!"
+
 
 if __name__ == '__main__':
     gtc_sig_app.run()
