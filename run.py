@@ -16,5 +16,8 @@ def get_signature():
     for key in dict:
         print(f'form key {dict[key]}')
     
+    content = "yah!"
+    return content, status.HTTP_200_OK
+
 if __name__ == '__main__':
     gtc_sig_app.run()
