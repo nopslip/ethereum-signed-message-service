@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import request
 
 gtc_sig_app = Flask(__name__)
 
@@ -7,7 +8,7 @@ def hello_world():
     return 'Welcome!'
 
 @gtc_sig_app.route('/get_signature', methods=['POST'])
-def get_signature(request):
+def get_signature():
     headers = request.headers()
     data = request.get_data()
     print(headers)
