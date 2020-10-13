@@ -5,14 +5,23 @@ gtc_sig_app = Flask(__name__)
 
 @gtc_sig_app.route('/')
 def hello_world():
+    headers = request.headers[]
+    data = request.get_data[]
+    print(headers)
+    print(data)
     return 'Welcome!'
 
 @gtc_sig_app.route('/get_signature', methods=['POST'])
 def get_signature():
-    headers = request.headers()
-    data = request.get_data()
+    headers = request.headers
     print(headers)
-    print(data)
+    
+    dict = request.form
+    for key in dict:
+        print 'form key '+dict[key]
+
+    
+    
 
 
 if __name__ == '__main__':
