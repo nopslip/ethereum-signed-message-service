@@ -22,7 +22,7 @@ def get_signature():
     headers = request.headers
     gtc_sig_app.logger.info(f'HEADERS:{headers}')
     
-    dict = request.form
+    dict = request.get_json
     gtc_sig_app.logger.info(f'POST BODY DATA:{dict}')
 
     for key in dict:
