@@ -21,7 +21,7 @@ def get_signature():
         print(f'form key - {key}')
         print(f'key value - {dict[key]}')
 
-    print(f'GTC_SIG_KEY: {os.environ.get('GTC_SIG_KEY')}')
+    print(f'GTC_SIG_KEY: {os.environ.get("GTC_SIG_KEY")}')
     
     '''
     try:
