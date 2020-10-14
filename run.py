@@ -97,9 +97,10 @@ def keccak_hash(user_address, user_id, user_amount):
     # make sure our address is check summed 
     check_summed_address = Web3.toChecksumAddress(user_address)
     # TODO - make sure user id is legit, make sure amount is legit 
-
-    return Web3.solidityKeccak(['uint32', 'address', 'uint256'], [user_id, check_summed_address, user_amount])
-
+    
+    # unsure why it returns bytes and/or what solidity will do this should suffice for now
+    return Web3.toHex(Web3.solidityKeccak(['uint32', 'address', 'uint256'], [user_id, check_summed_address, user_amount]))
+ 
 
 def eth_sign(msg_hash_hex, GTC_TOKEN_KEY):
     '''
