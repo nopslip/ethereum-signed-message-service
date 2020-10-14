@@ -53,11 +53,16 @@ def get_signature():
     # log computed hash for debugging 
     gtc_sig_app.logger.info(f'COMPUTED HASH: {computed_hash}')
 
+    # extract post data body
+    user_address = json_request['user_address']
+    user_id = json_request['user_id']
+    user_amount = json_request['user_amount'] 
+    
     # if the hashes match, we proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
         gtc_sig_app.logger.info('HASH MATCH!')
         
-        msg_hash_hex = keccak_hash(json_request['user_address'], json_request['user_id'], json_request['user_amount'])
+        msg_hash_hex = keccak_hash(user_address, user_id, user_amount])
         gtc_sig_app.logger.info(f'got keccak: {msg_hash_hex}')
         
         eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(msg_hash_hex, GTC_TOKEN_KEY)
@@ -65,8 +70,15 @@ def get_signature():
         gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
         
-        # TODO - craft full data that will be attached to ETH tx to claim tokens so we can return that 
-        return "THIS WILL BE A SIGNED MESSAGE!"
+        return_context = {
+            "user_address" : user_address,
+            "user_id" : user_id,
+            "user_amount" : user_amount,
+            "msg_hash_hex" : msg_hash_hex,
+            "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
+            "eth_signed_signature_hex" : eth_signed_signature_hex,
+        }
+        return return_context
 
     # oh no, the hashes didn't match.    
     else: 
