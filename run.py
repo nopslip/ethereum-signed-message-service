@@ -62,7 +62,7 @@ def get_signature():
     if headers['X-GITCOIN-SIG'] == computed_hash:
         gtc_sig_app.logger.info('HASH MATCH!')
         
-        msg_hash_hex = keccak_hash(user_address, user_id, user_amount])
+        msg_hash_hex = keccak_hash(user_address, user_id, user_amount)
         gtc_sig_app.logger.info(f'got keccak: {msg_hash_hex}')
         
         eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(msg_hash_hex, GTC_TOKEN_KEY)
