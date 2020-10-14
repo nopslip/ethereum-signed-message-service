@@ -7,6 +7,7 @@ import json
 from eth_account import Account, messages
 from flask import Flask
 from flask import request
+from flask import jsonify
 from web3 import Web3 
 
 gtc_sig_app = Flask(__name__)
@@ -78,7 +79,7 @@ def get_signature():
             "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
             "eth_signed_signature_hex" : eth_signed_signature_hex,
         }
-        return return_context
+        return jsonify(return_context)
 
     # oh no, the hashes didn't match.    
     else: 
