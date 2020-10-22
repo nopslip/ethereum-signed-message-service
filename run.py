@@ -62,18 +62,18 @@ def get_signature():
     if not Web3.isAddress(user_address):
         gtc_sig_app.logger.info('Invalid user_address received!')
         return "THERE WAS AN ISSUE!"
-    
+    # check we have an integer - improve me
     try:
         int(user_id)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_id received!')
         return "THERE WAS AN ISSUE!"
-    
-    # this should be improved probably 
-    if user_amount.isdigit():
+    # check user id is an int - improve me 
+    try: 
+        int(user_amount)
+    except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return "THERE WAS AN ISSUE!"
-
 
     # if the hashes match, we proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
