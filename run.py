@@ -7,7 +7,6 @@ import json
 from eth_account import Account, messages
 from flask import Flask
 from flask import request
-from flask import jsonify
 from web3 import Web3 
 
 gtc_sig_app = Flask(__name__)
@@ -59,6 +58,21 @@ def get_signature():
     user_id = json_request['user_id']
     user_amount = json_request['user_amount'] 
     
+    # validate post body data - TODO - improve response to return valid json & proper status code 
+    if not Web3.isAddres(user_address):
+        gtc_sig_app.logger.info('Invalid user_address received!')
+        return "THERE WAS AN ISSUE!"
+    
+    if not user_id.isdigit():
+        gtc_sig_app.logger.info('Invalid user_id received!')
+        return "THERE WAS AN ISSUE!"
+    
+    # this should be improved probably 
+    if user_amount.isdigit():
+        gtc_sig_app.logger.info('Invalid user_amount received!')
+        return "THERE WAS AN ISSUE!"
+
+
     # if the hashes match, we proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
         gtc_sig_app.logger.info('HASH MATCH!')
@@ -79,7 +93,7 @@ def get_signature():
             "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
             "eth_signed_signature_hex" : eth_signed_signature_hex,
         }
-        return jsonify(return_context)
+        return return_context
 
     # oh no, the hashes didn't match.    
     else: 
