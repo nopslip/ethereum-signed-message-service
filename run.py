@@ -59,7 +59,7 @@ def get_signature():
     user_amount = json_request['user_amount'] 
     
     # validate post body data - TODO - improve response to return valid json & proper status code 
-    if not Web3.isAddres(user_address):
+    if not Web3.isAddress(user_address):
         gtc_sig_app.logger.info('Invalid user_address received!')
         return "THERE WAS AN ISSUE!"
     
