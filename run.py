@@ -63,7 +63,9 @@ def get_signature():
         gtc_sig_app.logger.info('Invalid user_address received!')
         return "THERE WAS AN ISSUE!"
     
-    if not user_id.isdigit():
+    try:
+        int(user_id)
+    except ValueError:
         gtc_sig_app.logger.info('Invalid user_id received!')
         return "THERE WAS AN ISSUE!"
     
