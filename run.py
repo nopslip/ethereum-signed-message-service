@@ -55,7 +55,7 @@ def sign_claim():
     computed_hash = create_sha256_signature(GTC_SIG_KEY, json.dumps(json_request))
     gtc_sig_app.logger.info(f'COMPUTED HASH: {computed_hash}')
 
-    '''
+    
     # confirm we have POST data
     try: 
         user_address = json_request['user_address']
@@ -67,7 +67,7 @@ def sign_claim():
     except Exception as e:
         gtc_sig_app.logger.error(f'GTC Claim Generator error: {e}')
         return Response("{'message':'NOT OKAY #6'}", status=400, mimetype='application/json') 
-    '''
+    
     
     # validate post body data - TODO - improve response to return valid json & proper status code 
     if not Web3.isAddress(user_address):
