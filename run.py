@@ -4,15 +4,20 @@ import hashlib
 import binascii 
 import json
 
-from eth_account import Account, messages
 from flask import Flask
 from flask import Request
 from flask import Response
+
 from web3 import Web3 
+from eth_account import Account, messages
+
+from eip712_structs import make_domain
+from eip712_structs import EIP712Struct, String, Uint
+
 
 gtc_sig_app = Flask(__name__)
 
-# confirm we have our envars 
+# confirm we have our envars or don't start server 
 if "GTC_SIG_KEY" in os.environ:
     GTC_SIG_KEY = os.environ.get('GTC_SIG_KEY')
 else: 
@@ -35,7 +40,7 @@ def sign_claim():
     '''
     # I think we will probably put in check to make sure this is gitcoin.co web server 
     # for now, we're just logging 
-    ip_address = Flask.request.remote_addr
+    ip_address = Request.remote_addr
     gtc_sig_app.logger.info(f'Source IP: {ip_address}')
     
 
