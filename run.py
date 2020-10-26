@@ -41,7 +41,7 @@ def sign_claim():
     # I think we will probably put in check to make sure this is gitcoin.co web server 
     # for now, we're just logging 
     ip_address = request.remote_addr
-     gtc_sig_app.logger.info(f'Source IP: {ip_address}')
+    gtc_sig_app.logger.info(f'Source IP: {ip_address}')
     
     # define struct class 
     class ClaimStruct(EIP712Struct):
