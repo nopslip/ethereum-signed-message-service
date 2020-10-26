@@ -55,10 +55,18 @@ def sign_claim():
     computed_hash = create_sha256_signature(GTC_SIG_KEY, json.dumps(json_request))
     gtc_sig_app.logger.info(f'COMPUTED HASH: {computed_hash}')
 
-    # extract post data body
-    user_address = json_request['user_address']
-    user_id = json_request['user_id']
-    user_amount = json_request['user_amount'] 
+  
+    # confirm we have POSt data
+    try: 
+        user_address = json_request['user_address']
+        user_id = json_request['user_id']
+        user_amount = json_request['user_amount']
+    except TypeError:
+        gtc_sig_app.logger.info('Generic POST data TypeError received - confirm required values have been provided in POST payload')
+        return Response("{'message':'NOT OKAY #5'}", status=400, mimetype='application/json')
+    except Exception as e:
+        gtc_sig_app.logger.error(f'GTC Claim Generator error: {e}')
+        return Response("{'message':'NOT OKAY #6'}", status=400, mimetype='application/json') 
     
     # validate post body data - TODO - improve response to return valid json & proper status code 
     if not Web3.isAddress(user_address):
@@ -76,7 +84,7 @@ def sign_claim():
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response("{'message':'NOT OKAY #3'}", status=400, mimetype='application/json')
-
+   
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
         gtc_sig_app.logger.info('HASH MATCH!')
