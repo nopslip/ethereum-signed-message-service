@@ -33,6 +33,12 @@ def sign_claim():
     Provided payload of datas including, HMAC signature will return EIP712 compliant 
     struct that a user can use to claim tokens by sending to the a TokenDistributor contract
     '''
+    # I think we will probably put in check to make sure this is gitcoin.co web server 
+    # for now, we're just logging 
+    ip_address = flask.request.remote_addr
+    gtc_sig_app.logger.info(f'Source IP: {ip_address}')
+    
+
     gtc_sig_app.logger.info(GTC_SIG_KEY)
     return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
 
