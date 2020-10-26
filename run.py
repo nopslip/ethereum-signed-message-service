@@ -7,6 +7,7 @@ import json
 from flask import Flask
 from flask import Request
 from flask import Response
+from flask import request 
 
 from web3 import Web3 
 from eth_account import Account, messages
@@ -41,7 +42,8 @@ def sign_claim():
     # I think we will probably put in check to make sure this is gitcoin.co web server 
     # for now, we're just logging 
     ip_address = Request.remote_addr
-    gtc_sig_app.logger.info(f'Source IP: {ip_address[0]}')
+    print(request.remote_addr)
+    gtc_sig_app.logger.info(f'Source IP: {ip_address}')
     
 
     gtc_sig_app.logger.info(GTC_SIG_KEY)
