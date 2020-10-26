@@ -50,9 +50,42 @@ def sign_claim():
 
     # Create an instance with some data
     mine = ClaimStruct(some_string='hello world', some_number=1234)
-    print(mine)
     gtc_sig_app.logger.info(f'struct bytes: {mine}')
- 
+
+    # extract our headers, log headers for debugging 
+    headers = request.headers
+    gtc_sig_app.logger.info(f'Incoming POST request headers:{request.headers}')
+    
+    # extract POST data as json, log POST data for debugging 
+    json_request = request.get_json()
+    gtc_sig_app.logger.info(f'POST BODY DATA:{json_request}')
+    
+    # calc HMAC hash for our POST data, log computed hash for debugging 
+    computed_hash = create_sha256_signature(GTC_SIG_KEY, json.dumps(json_request))
+    gtc_sig_app.logger.info(f'COMPUTED HASH: {computed_hash}')
+
+    # extract post data body
+    user_address = json_request['user_address']
+    user_id = json_request['user_id']
+    user_amount = json_request['user_amount'] 
+    
+    # validate post body data - TODO - improve response to return valid json & proper status code 
+    if not Web3.isAddress(user_address):
+        gtc_sig_app.logger.info('Invalid user_address received!')
+        return Response("{'message':'NOT OKAY #1'}", status=400, mimetype='application/json')
+    # check we have an integer - improve me
+    try:
+        int(user_id)
+    except ValueError:
+        gtc_sig_app.logger.info('Invalid user_id received!')
+        return Response("{'message':'NOT OKAY #2'}", status=400, mimetype='application/json')
+    # check user id is an int - improve me 
+    try: 
+        int(user_amount)
+    except ValueError:
+        gtc_sig_app.logger.info('Invalid user_amount received!')
+        return Response("{'message':'NOT OKAY #3'}", status=400, mimetype='application/json')
+  
     return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
 
 
