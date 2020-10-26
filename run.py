@@ -16,6 +16,7 @@ from eip712_structs import EIP712Struct, String, Uint
 
 
 gtc_sig_app = Flask(__name__)
+gtc_sig_app.debug = True
 
 # confirm we have our envars or don't start server 
 if "GTC_SIG_KEY" in os.environ:
@@ -38,6 +39,7 @@ def sign_claim():
     Provided payload of datas including, HMAC signature will return EIP712 compliant 
     struct that a user can use to claim tokens by sending to the a TokenDistributor contract
     '''
+    print(request)
     # I think we will probably put in check to make sure this is gitcoin.co web server 
     # for now, we're just logging 
     ip_address = request.remote_addr
@@ -214,6 +216,11 @@ def get_signature():
         gtc_sig_app.logger.info('HASH NO MATCH!!')
         # TODO - set status code of 400 maybe?  
         return "THERE WAS AN ISSUE!"
+
+@gtc_sig_app.before_request
+def before_request():
+    print(request.method, request.endpoint, request.data)
+
 
 def shutdown_server(message):
     ''' 
