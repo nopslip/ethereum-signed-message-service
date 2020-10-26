@@ -42,15 +42,6 @@ def sign_claim():
     # for now, we're just logging 
     ip_address = request.remote_addr
     gtc_sig_app.logger.info(f'Source IP: {ip_address}')
-    
-    # define struct class 
-    class ClaimStruct(EIP712Struct):
-        some_string = String()
-        some_number = Uint(256)
-
-    # Create an instance with some data
-    mine = ClaimStruct(some_string='hello world', some_number=1234)
-    gtc_sig_app.logger.info(f'struct bytes: {mine}')
 
     # extract our headers, log headers for debugging 
     headers = request.headers
@@ -85,7 +76,39 @@ def sign_claim():
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response("{'message':'NOT OKAY #3'}", status=400, mimetype='application/json')
-  
+
+    # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
+    if headers['X-GITCOIN-SIG'] == computed_hash:
+        gtc_sig_app.logger.info('HASH MATCH!')
+        
+        msg_hash_hex = keccak_hash(user_address, user_id, user_amount)
+        gtc_sig_app.logger.info(f'got keccak: {msg_hash_hex}')
+        
+        eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(msg_hash_hex, GTC_TOKEN_KEY)
+
+        gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
+        gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
+        
+        return_context = {
+            "user_address" : user_address,
+            "user_id" : user_id,
+            "user_amount" : user_amount,
+            "msg_hash_hex" : msg_hash_hex,
+            "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
+            "eth_signed_signature_hex" : eth_signed_signature_hex,
+        }
+        return return_context
+    
+    # define struct class 
+    class ClaimStruct(EIP712Struct):
+        some_string = String()
+        some_number = Uint(256)
+
+    # Create an instance with some data
+    mine = ClaimStruct(some_string='hello world', some_number=1234)
+    gtc_sig_app.logger.info(f'struct bytes: {mine}')
+    
+    # default return 
     return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
 
 
