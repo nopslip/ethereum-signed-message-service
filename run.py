@@ -5,9 +5,8 @@ import binascii
 import json
 
 from flask import Flask
-from flask import Request
-from flask import Response
 from flask import request
+from flask import response
 
 from web3 import Web3 
 from eth_account import Account, messages
@@ -42,16 +41,18 @@ def sign_claim():
     # I think we will probably put in check to make sure this is gitcoin.co web server 
     # for now, we're just logging 
     ip_address = request.remote_addr
-    print(request.remote_addr)
-    gtc_sig_app.logger.info(f'Source IP: {ip_address}')
+     gtc_sig_app.logger.info(f'Source IP: {ip_address}')
     
     # define struct class 
     class ClaimStruct(EIP712Struct):
         some_string = String()
         some_number = Uint(256)
 
-    gtc_sig_app.logger.info(GTC_SIG_KEY)
-    return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
+    # Create an instance with some data
+    mine = ClaimStruct(some_string='hello world', some_number=1234)
+
+ 
+    return response("{'message':'OKAY!'}", status=200, mimetype='application/json')
 
 
 @gtc_sig_app.route('/get_signature', methods=['POST'])
@@ -76,13 +77,13 @@ def get_signature():
         return "NO GTC_TOKEN_KEY FOUND!"
     
     # extract our headers 
-    headers = Request.headers
+    headers = request.headers
 
     # log headers for debugging 
     gtc_sig_app.logger.info(f'Incoming POST request headers:{request.headers}')
     
     # extract POST data as json 
-    json_request = Request.get_json()
+    json_request = request.get_json()
 
     # log POST data for debugging 
     gtc_sig_app.logger.info(f'POST BODY DATA:{json_request}')
