@@ -12,7 +12,7 @@ from web3 import Web3
 from eth_account import Account, messages
 
 from eip712_structs import make_domain
-from eip712_structs import EIP712Struct, String, Uint
+from eip712_structs import EIP712Struct, Uint, Address, make_domain
 
 
 gtc_sig_app = Flask(__name__)
@@ -39,7 +39,7 @@ def sign_claim():
     Provided payload of datas including, HMAC signature will return EIP712 compliant 
     struct that a user can use to claim tokens by sending to the a TokenDistributor contract
     '''
-    print(request)
+   
     # I think we will probably put in check to make sure this is gitcoin.co web server 
     # for now, we're just logging 
     ip_address = request.remote_addr
@@ -92,37 +92,32 @@ def sign_claim():
     if headers['X-GITCOIN-SIG'] == computed_hash:
         gtc_sig_app.logger.info('HASH MATCH!')
         
-        msg_hash_hex = keccak_hash(user_address, user_id, user_amount)
-        gtc_sig_app.logger.info(f'got keccak: {msg_hash_hex}')
+        # build out EIP712 struct 
+        signable_message = createSignableStruct(user_address, user_id, user_amount)
         
-        eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(msg_hash_hex, GTC_TOKEN_KEY)
+        # sign it up 
+        eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign_2(signable_message)
 
         gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
-        
+       
         return_context = {
             "user_address" : user_address,
             "user_id" : user_id,
             "user_amount" : user_amount,
-            "msg_hash_hex" : msg_hash_hex,
             "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
             "eth_signed_signature_hex" : eth_signed_signature_hex,
         }
-        return return_context
+
+        # all is well, return response 
+        return Response(return_context, status=200, mimetype='application/json')
+        
 
     # The HMAC didn't match, this should be considered suspicious & investigated in prod     
     else: 
         gtc_sig_app.logger.info('HMAC HASH DID NOT MATCH!!')
         return Response("{'message':'NOT OKAY #4'}", status=401, mimetype='application/json')
     
-    # define struct class 
-    class ClaimStruct(EIP712Struct):
-        some_string = String()
-        some_number = Uint(256)
-
-    # Create an instance with some data
-    mine = ClaimStruct(some_string='hello world', some_number=1234)
-    gtc_sig_app.logger.info(f'struct bytes: {mine}')
     
     # default return 
     return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
@@ -265,5 +260,40 @@ def eth_sign(msg_hash_hex, GTC_TOKEN_KEY):
     signed_message = Account.sign_message(message, private_key=GTC_TOKEN_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
+def eth_sign_2(msg_json):
+    '''
+    Signs an EIP712 compliant message using Ethereum private key
+    returns messageHash in HexBytes & signature in HexBytes
+    '''
+    signable_message = messages.encode_structured_data(text=msg_json)
+    signed_message = Account.sign_message(signable_message, private_key=GTC_TOKEN_KEY)
+    return signed_message.messageHash.hex(), signed_message.signature.hex()
+
+def createSignableStruct(user_address, user_id, user_amount):
+    '''
+    crafts a signable struct using - https://github.com/ConsenSys/py-eip712-structs
+    '''
+
+    # Make a unique domain seperator - contract addy is just random rinkeby address for me for testing 
+    domain = make_domain(name='GTC-TokenDistributor', version='1.0.0', chainId=1, verifyingContract='0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81')  
+
+    # Define our struct type
+    class ClaimStruct(EIP712Struct):
+        user_address = Address()
+        user_id = Uint(32)
+        user_amount = Uint(256)
+
+    # Create an instance with some data
+    mine = ClaimStruct(user_address=user_address, user_id=user_id, user_amount=user_amount)
+
+    # Into message JSON - domain required.
+    # This method converts bytes types for you, which the default JSON encoder won't handle.
+    my_msg_json = mine.to_message_json(domain)
+  
+    return my_msg_json
+
+
 if __name__ == '__main__':
     gtc_sig_app.run()
+
+
