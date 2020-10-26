@@ -7,19 +7,41 @@ import json
 from eth_account import Account, messages
 from flask import Flask
 from flask import request
+from flask import Response
 from web3 import Web3 
 
 gtc_sig_app = Flask(__name__)
 
+# confirm we have our envars 
+if "GTC_SIG_KEY" in os.environ:
+    GTC_SIG_KEY = os.environ.get('GTC_SIG_KEY')
+else: 
+    shutdown_server('No GTC_SIG_KEY found! Server will stop.')
+
+if "GTC_TOKEN_KEY" in os.environ:
+    GTC_TOKEN_KEY = os.environ.get('GTC_TOKEN_KEY')
+else: 
+    shutdown_server('GTC_TOKEN_KEY not found!')
+
 @gtc_sig_app.route('/')
 def hello_world():
-    return '--GTC TOKEN SIGNER V1--'
+    return '--SERVER IS LIVE!--'
+
+@gtc_sig_app.route('/v1/sign_claim', methods=['POST'])
+def sign_claim():
+    '''
+    Provided payload of datas including, HMAC signature will return EIP712 compliant 
+    struct that a user can use to claim tokens by sending to the a TokenDistributor contract
+    '''
+    return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
+
 
 @gtc_sig_app.route('/get_signature', methods=['POST'])
 def get_signature():
     '''
-    This is the main route used by the micro service to accept POST requests
-    and return the transaction data required for users to claim GTC tokens
+    This is the legacy route used by the micro service to accept POST requests
+    and return the transaction data required for users to claim GTC tokens.
+    This route is be replaced with EIP712 compliant /v1/sign_claim
     '''
 
     # confirm we have our envars 
@@ -103,7 +125,13 @@ def get_signature():
         # TODO - set status code of 400 maybe?  
         return "THERE WAS AN ISSUE!"
 
-    
+def shutdown_server(message):
+    ''' 
+    In the event that we want to kill the server (or prevent it from starting)
+    '''
+    gtc_sig_app.logger.info(message)
+    raise RuntimeError(message)
+
 
 def create_sha256_signature(key, message):
     '''
@@ -139,7 +167,6 @@ def eth_sign(msg_hash_hex, GTC_TOKEN_KEY):
     message = messages.encode_defunct(hexstr=msg_hash_hex)
     signed_message = Account.sign_message(message, private_key=GTC_TOKEN_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
-
 
 if __name__ == '__main__':
     gtc_sig_app.run()
