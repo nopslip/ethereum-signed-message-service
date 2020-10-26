@@ -33,6 +33,7 @@ def sign_claim():
     Provided payload of datas including, HMAC signature will return EIP712 compliant 
     struct that a user can use to claim tokens by sending to the a TokenDistributor contract
     '''
+    gtc_sig_app.logger.info(GTC_SIG_KEY)
     return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
 
 
