@@ -98,6 +98,11 @@ def sign_claim():
             "eth_signed_signature_hex" : eth_signed_signature_hex,
         }
         return return_context
+
+    # The HMAC didn't match, this should be considered suspicious & investigated in prod     
+    else: 
+        gtc_sig_app.logger.info('HMAC HASH DID NOT MATCH!!')
+        return Response("{'message':'NOT OKAY #4'}", status=401, mimetype='application/json')
     
     # define struct class 
     class ClaimStruct(EIP712Struct):
