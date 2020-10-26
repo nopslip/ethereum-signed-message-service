@@ -6,7 +6,7 @@ import json
 
 from eth_account import Account, messages
 from flask import Flask
-from flask import request
+from flask import Request
 from flask import Response
 from web3 import Web3 
 
@@ -35,7 +35,7 @@ def sign_claim():
     '''
     # I think we will probably put in check to make sure this is gitcoin.co web server 
     # for now, we're just logging 
-    ip_address = flask.request.remote_addr
+    ip_address = Flask.request.remote_addr
     gtc_sig_app.logger.info(f'Source IP: {ip_address}')
     
 
@@ -65,13 +65,13 @@ def get_signature():
         return "NO GTC_TOKEN_KEY FOUND!"
     
     # extract our headers 
-    headers = request.headers
+    headers = Request.headers
 
     # log headers for debugging 
     gtc_sig_app.logger.info(f'Incoming POST request headers:{request.headers}')
     
     # extract POST data as json 
-    json_request = request.get_json()
+    json_request = Request.get_json()
 
     # log POST data for debugging 
     gtc_sig_app.logger.info(f'POST BODY DATA:{json_request}')
