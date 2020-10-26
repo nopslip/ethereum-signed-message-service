@@ -6,7 +6,7 @@ import json
 
 from flask import Flask
 from flask import request
-from flask import response
+from flask import Response
 
 from web3 import Web3 
 from eth_account import Account, messages
@@ -51,8 +51,9 @@ def sign_claim():
     # Create an instance with some data
     mine = ClaimStruct(some_string='hello world', some_number=1234)
 
+    gtc_sig_app.logger.info(f'struct bytes: {mine}')
  
-    return response("{'message':'OKAY!'}", status=200, mimetype='application/json')
+    return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
 
 
 @gtc_sig_app.route('/get_signature', methods=['POST'])
