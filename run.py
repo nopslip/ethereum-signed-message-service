@@ -110,7 +110,7 @@ def sign_claim():
         }
 
         # all is well, return response 
-        return Response(return_context, status=200, mimetype='application/json')
+        return Response({return_context}, status=200, mimetype='application/json')
         
 
     # The HMAC didn't match, this should be considered suspicious & investigated in prod     
