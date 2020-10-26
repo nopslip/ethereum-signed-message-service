@@ -280,7 +280,7 @@ def createSignableStruct(user_address, user_id, user_amount):
     '''
 
     # Make a unique domain seperator - contract addy is just random rinkeby address for me for testing 
-    domain = make_domain(name='GTC-TokenDistributor', version='1.0.0', chainId=1, verifyingContract='0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81', salt='0xf2d857f4a3edcb9b78b4d503bfe733db1e3f6cdc2b7971ee739626c97e86a558')  
+    domain = make_domain(name='GTC-TokenDistributor', version='1.0.0', chainId=1, verifyingContract='0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81')  
 
     # Define our struct type
     class ClaimStruct(EIP712Struct):
