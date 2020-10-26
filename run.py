@@ -7,7 +7,7 @@ import json
 from flask import Flask
 from flask import Request
 from flask import Response
-from flask import request 
+from flask import request
 
 from web3 import Web3 
 from eth_account import Account, messages
@@ -41,10 +41,14 @@ def sign_claim():
     '''
     # I think we will probably put in check to make sure this is gitcoin.co web server 
     # for now, we're just logging 
-    ip_address = Request.remote_addr
+    ip_address = request.remote_addr
     print(request.remote_addr)
     gtc_sig_app.logger.info(f'Source IP: {ip_address}')
     
+    # define struct class 
+    class ClaimStruct(EIP712Struct):
+        some_string = String()
+        some_number = Uint(256)
 
     gtc_sig_app.logger.info(GTC_SIG_KEY)
     return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
