@@ -109,7 +109,7 @@ def sign_claim():
             "eth_signed_signature_hex" : eth_signed_signature_hex,
         }
         # could just return the object above but I like to know
-        response = app.response_class(
+        response = gtc_sig_app.response_class(
             response=json.dumps(return_context),
             status=200,
             mimetype='application/json'
