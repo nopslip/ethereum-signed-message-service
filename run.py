@@ -198,6 +198,7 @@ def get_signature():
         
         eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(msg_hash_hex, GTC_TOKEN_KEY)
 
+        gtc_sig_app.logger.info(f'msg_hash_hex: {msg_hash_hex}')
         gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
         
