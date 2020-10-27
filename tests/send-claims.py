@@ -33,7 +33,7 @@ def test_post_values_2():
     '''
 
     post_data = {}
-    post_data['user_id'] = 42
+    post_data['user_id'] = 26
     post_data['user_address'] = '0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81'
     post_data['user_amount'] = 1000000000000000 # placeholder for amount, need to use big number 
 
@@ -46,7 +46,7 @@ def test_post_values_2():
 
     r = requests.post(v1_api_uri, data=json.dumps(post_data), headers=header)
 
-    print(f'test_post_values_2: {r.text}')
+    print(f'test_post_values_2 response: {r.text}')
     # assert r.status_code == 400, "Empty Post data should return a 400!"
 
 

@@ -90,7 +90,7 @@ def sign_claim():
    
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
-        gtc_sig_app.logger.info('HASH MATCH!')
+        gtc_sig_app.logger.info('POST HMAC DIGEST MATCHES!')
         
         # build out EIP712 struct 
         signable_message = createSignableStruct(user_id, user_address, user_amount)
