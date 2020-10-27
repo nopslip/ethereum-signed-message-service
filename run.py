@@ -93,7 +93,7 @@ def sign_claim():
         gtc_sig_app.logger.info('HASH MATCH!')
         
         # build out EIP712 struct 
-        signable_message = createSignableStruct(user_address, user_id, user_amount)
+        signable_message = createSignableStruct(user_id, user_address, user_amount)
         
         # sign it up 
         eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign_2(signable_message)
@@ -275,7 +275,7 @@ def eth_sign_2(msg_json):
     signed_message = Account.sign_message(signable_message, private_key=GTC_TOKEN_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
-def createSignableStruct(user_address, user_id, user_amount):
+def createSignableStruct(user_id, user_address, user_amount):
     '''
     crafts a signable struct using - https://github.com/ConsenSys/py-eip712-structs
     '''
@@ -285,8 +285,8 @@ def createSignableStruct(user_address, user_id, user_amount):
 
     # Define our struct type
     class ClaimStruct(EIP712Struct):
-        user_address = Address()
         user_id = Uint(32)
+        user_address = Address()
         user_amount = Uint(256)
 
     # Create an instance with some data
