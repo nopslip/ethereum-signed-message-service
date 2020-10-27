@@ -290,7 +290,7 @@ def createSignableStruct(user_address, user_id, user_amount):
         user_amount = Uint(256)
 
     # Create an instance with some data
-    mine = ClaimStruct(user_address=user_address, user_id=user_id, user_amount=user_amount)
+    mine = ClaimStruct(user_id=user_id,user_address=user_address,user_amount=user_amount)
 
     # Into message JSON - domain required.
     # This method converts bytes types for you, which the default JSON encoder won't handle.
