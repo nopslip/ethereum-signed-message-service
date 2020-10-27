@@ -60,8 +60,8 @@ def sign_claim():
     
     # confirm we have POST data
     try: 
-        user_address = json_request['user_address']
         user_id = json_request['user_id']
+        user_address = json_request['user_address']
         user_amount = json_request['user_amount']
     except TypeError:
         gtc_sig_app.logger.info('Generic POST data TypeError received - confirm required values have been provided in POST payload')
@@ -95,8 +95,12 @@ def sign_claim():
         # build out EIP712 struct 
         signable_message = createSignableStruct(user_id, user_address, user_amount)
         
-        # sign it up 
-        eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign_2(signable_message)
+        # sign it up
+        try:
+            eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign_2(signable_message)
+        except Exception as e:
+            gtc_sig_app.logger.error(f'GTC Distributor - Error Hashing Message: {e}')
+            return Response("{'message':'ERROR #1'}", status=500, mimetype='application/json')
 
         gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
@@ -127,7 +131,7 @@ def sign_claim():
     # default return 
     return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
 
-
+# legacy 
 @gtc_sig_app.route('/get_signature', methods=['POST'])
 def get_signature():
     '''
@@ -198,7 +202,6 @@ def get_signature():
         
         eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(msg_hash_hex, GTC_TOKEN_KEY)
 
-        gtc_sig_app.logger.info(f'msg_hash_hex: {msg_hash_hex}')
         gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
         
@@ -206,7 +209,6 @@ def get_signature():
             "user_address" : user_address,
             "user_id" : user_id,
             "user_amount" : user_amount,
-            "msg_hash_hex" : msg_hash_hex,
             "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
             "eth_signed_signature_hex" : eth_signed_signature_hex,
         }
@@ -251,7 +253,6 @@ def keccak_hash(user_address, user_id, user_amount):
     '''
     # make sure our address is check summed 
     check_summed_address = Web3.toChecksumAddress(user_address)
-    # TODO - make sure user id is legit, make sure amount is legit 
     
     # unsure why it returns bytes and/or what solidity will do this should suffice for now
     return Web3.toHex(Web3.solidityKeccak(['uint32', 'address', 'uint256'], [user_id, check_summed_address, user_amount]))
@@ -266,12 +267,12 @@ def eth_sign(msg_hash_hex, GTC_TOKEN_KEY):
     signed_message = Account.sign_message(message, private_key=GTC_TOKEN_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
-def eth_sign_2(msg_json):
+def eth_sign_2(claim_msg_json):
     '''
     Signs an EIP712 compliant message using Ethereum private key
     returns messageHash in HexBytes & signature in HexBytes
     '''
-    signable_message = messages.encode_structured_data(text=msg_json)
+    signable_message = messages.encode_structured_data(text=claim_msg_json)
     signed_message = Account.sign_message(signable_message, private_key=GTC_TOKEN_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
@@ -281,22 +282,28 @@ def createSignableStruct(user_id, user_address, user_amount):
     '''
 
     # Make a unique domain seperator - contract addy is just random rinkeby address for me for testing 
-    domain = make_domain(name='GTC', version='1.0.0', chainId=1, verifyingContract='0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81')  
+    domain = make_domain(
+        name='GTC', 
+        version='1.0.0', 
+        chainId=1, 
+        verifyingContract='0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81')  
 
     # Define our struct type
-    class ClaimStruct(EIP712Struct):
+    class Claim(EIP712Struct):
         user_id = Uint(32)
         user_address = Address()
         user_amount = Uint(256)
 
     # Create an instance with some data
-    mine = ClaimStruct(user_id=user_id,user_address=user_address,user_amount=user_amount)
+    claim = Claim(
+        user_id=user_id,
+        user_address=user_address,
+        user_amount=user_amount)
 
-    # Into message JSON - domain required.
-    # This method converts bytes types for you, which the default JSON encoder won't handle.
-    my_msg_json = mine.to_message_json(domain)
+    # Into message JSON - This method converts bytes types for you, which the default JSON encoder won't handle.
+    claim_msg_json = claim.to_message_json(domain)
   
-    return my_msg_json
+    return claim_msg_json
 
 
 if __name__ == '__main__':
