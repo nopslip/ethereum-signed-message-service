@@ -33,7 +33,7 @@ def test_post_values_2():
     '''
 
     post_data = {}
-    post_data['user_id'] = 26
+    post_data['user_id'] = 1
     post_data['user_address'] = '0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81'
     post_data['user_amount'] = 1000000000000000 # placeholder for amount, need to use big number 
 

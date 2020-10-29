@@ -23,12 +23,19 @@ from eth_account import Account, messages
 from web3 import Web3
 from pprint import pprint
 import json
+import sys
 
-# test and already public private key for account 0x3DB763BBBb1aC900EB2eB8b106218f85F9f64a13 
-GTC_TOKEN_KEY = '7bf19806aa6d5b31d7b7ea9e833c202e51ff8ee6311df6a036f0261f216f09ef'
+
+# confirm we have our envars or don't start server 
+if "PRIVATE_KEY" in os.environ:
+    PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
+else: 
+    print("PLEASE SET GTC_TOKEN_KEY! This will be the private key of the account used to sign claims")
+    sys.exit()
+
 
 # test values to populate 
-user_id = 26
+user_id = 42
 user_address = '0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81'
 user_amount = 1000000000000000
 
@@ -40,10 +47,10 @@ def createSignableStruct():
     # Make a unique domain seperator - contract addy is just random rinkeby address for me for testing 
     
     domain = make_domain(
-        name='GTC', 
-        version='1.0.0', 
-        chainId=1, 
-        verifyingContract='0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81')
+        name='WOLF', 
+        version='1.0.1', 
+        chainId=4, 
+        verifyingContract='0xa4c8B8a59805F6B049b977296881CE76f538D7C4')
     
 
     # Define your struct type
@@ -77,12 +84,15 @@ def createSignableStruct():
     claim_msg = claim.to_message(domain)
     assert isinstance(claim_msg, dict)
     pprint(f'claim_msg: {claim_msg}')
+   
 
     # This method converts bytes types for you, which the default JSON encoder won't handle.
     claim_msg_json = claim.to_message_json(domain)
     assert isinstance(claim_msg_json, str)
     pretty_json = json.dumps(json.loads(claim_msg_json), indent=2)
     pprint(f'claim_msg_json: {pretty_json}')
+    digest_msg_json = Web3.toHex(Web3.solidityKeccak(['string'], [claim_msg_json]))
+    pprint(f'digest_msg_json: {digest_msg_json}')
 
     # Into signable bytes - domain required
     claim_bytes = claim.signable_bytes(domain)
@@ -100,6 +110,7 @@ def eth_sign(claim_msg_json, GTC_TOKEN_KEY):
     '''    
     signable_message = messages.encode_structured_data(text=claim_msg_json)
     pprint(f'signable_message: {signable_message}')
+    # pprint(f'signable_message_keccak: {')
     signed_message = Account.sign_message(signable_message, private_key=GTC_TOKEN_KEY)
     pprint(f'full monty: {signed_message}')
     # print(f's,r: {signed_message.s.hex()}, {signed_message.r.hex()}')
@@ -121,6 +132,6 @@ def keccak_hash(user_id, user_address, user_amount):
 # pprint(keccak_hash(user_id=user_id, user_address=user_address, user_amount=user_amount))
 
 # the magic 
-eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(createSignableStruct(), GTC_TOKEN_KEY)
+eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(createSignableStruct(), PRIVATE_KEY)
 # print(eth_signed_message_hash_hex, eth_signed_signature_hex)
 print('\n\n\n')

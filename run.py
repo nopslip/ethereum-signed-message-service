@@ -24,10 +24,10 @@ if "GTC_SIG_KEY" in os.environ:
 else: 
     shutdown_server('No GTC_SIG_KEY found! Server will stop.')
 
-if "GTC_TOKEN_KEY" in os.environ:
-    GTC_TOKEN_KEY = os.environ.get('GTC_TOKEN_KEY')
+if "PRIVATE_KEY" in os.environ:
+    PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
 else: 
-    shutdown_server('GTC_TOKEN_KEY not found!')
+    shutdown_server('PRIVATE_KEY not found!')
 
 @gtc_sig_app.route('/')
 def hello_world():
@@ -147,11 +147,11 @@ def get_signature():
         gtc_sig_app.logger.info('GTC_SIG_KEY not found!')
         return "NO GTC_SIG_KEY FOUND!"
 
-    if "GTC_TOKEN_KEY" in os.environ:
-        GTC_TOKEN_KEY = os.environ.get('GTC_TOKEN_KEY')
+    if "PRIVATE_KEY" in os.environ:
+        PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
     else: 
-        gtc_sig_app.logger.info('GTC_TOKEN_KEY not found!')
-        return "NO GTC_TOKEN_KEY FOUND!"
+        gtc_sig_app.logger.info('PRIVATE_KEY not found!')
+        return "NO PRIVATE_KEY FOUND!"
     
     # extract our headers 
     headers = request.headers
@@ -200,7 +200,7 @@ def get_signature():
         msg_hash_hex = keccak_hash(user_address, user_id, user_amount)
         gtc_sig_app.logger.info(f'got keccak: {msg_hash_hex}')
         
-        eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(msg_hash_hex, GTC_TOKEN_KEY)
+        eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(msg_hash_hex, PRIVATE_KEY)
 
         gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
@@ -258,13 +258,13 @@ def keccak_hash(user_address, user_id, user_amount):
     return Web3.toHex(Web3.solidityKeccak(['uint32', 'address', 'uint256'], [user_id, check_summed_address, user_amount]))
  
 
-def eth_sign(msg_hash_hex, GTC_TOKEN_KEY):
+def eth_sign(msg_hash_hex, PRIVATE_KEY):
     '''
     Signs a message using Ethereum private key
     returns messageHash in HexBytes & signature in HexBytes
     '''
     message = messages.encode_defunct(hexstr=msg_hash_hex)
-    signed_message = Account.sign_message(message, private_key=GTC_TOKEN_KEY)
+    signed_message = Account.sign_message(message, private_key=PRIVATE_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
 def eth_sign_2(claim_msg_json):
@@ -273,7 +273,7 @@ def eth_sign_2(claim_msg_json):
     returns messageHash in HexBytes & signature in HexBytes
     '''
     signable_message = messages.encode_structured_data(text=claim_msg_json)
-    signed_message = Account.sign_message(signable_message, private_key=GTC_TOKEN_KEY)
+    signed_message = Account.sign_message(signable_message, private_key=PRIVATE_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
 def createSignableStruct(user_id, user_address, user_amount):
@@ -283,10 +283,10 @@ def createSignableStruct(user_id, user_address, user_amount):
 
     # Make a unique domain seperator - contract addy is just random rinkeby address for me for testing 
     domain = make_domain(
-        name='GTC', 
-        version='1.0.0', 
-        chainId=1, 
-        verifyingContract='0x8e9d312F6E0B3F511bb435AC289F2Fd6cf1F9C81')  
+        name='WOLF', 
+        version='1.0.1', 
+        chainId=4, 
+        verifyingContract='0x4193f0e524B396E6291461c58948Ab48B2B8e52a')  
 
     # Define our struct type
     class Claim(EIP712Struct):
