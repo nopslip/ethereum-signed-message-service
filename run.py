@@ -115,7 +115,7 @@ def sign_claim():
         return_context = {
             "user_address" : user_address,
             "user_id" : user_id,
-            "user_amount" : user_amount_in_eth,
+            "user_amount" : str(user_amount_in_eth),
             "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
             "eth_signed_signature_hex" : eth_signed_signature_hex,
         }
