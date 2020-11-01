@@ -40,7 +40,7 @@ def sign_claim():
     struct that a user can use to claim tokens by sending to the a TokenDistributor contract
     '''
    
-    # I think we will probably put in check to make sure this is gitcoin.co web server 
+    # I think we will probably put in check to make sure this is gitcoin.co web server w
     # for now, we're just logging 
     ip_address = request.remote_addr
     gtc_sig_app.logger.info(f'Source IP: {ip_address}')
@@ -56,7 +56,6 @@ def sign_claim():
     # calc HMAC hash for our POST data, log computed hash for debugging 
     computed_hash = create_sha256_signature(GTC_SIG_KEY, json.dumps(json_request))
     gtc_sig_app.logger.info(f'COMPUTED HASH: {computed_hash}')
-
     
     # confirm we have POST data
     try: 
@@ -76,17 +75,20 @@ def sign_claim():
         gtc_sig_app.logger.info('Invalid user_address received!')
         return Response("{'message':'NOT OKAY #1'}", status=400, mimetype='application/json')
     # check we have an integer - improve me
+    # TODO - check that user_id is within bounds of total known legit user_id's, if not, we want to be notified 
     try:
         int(user_id)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_id received!')
         return Response("{'message':'NOT OKAY #2'}", status=400, mimetype='application/json')
-    # check user id is an int - improve me 
+   
     try: 
         int(user_amount)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response("{'message':'NOT OKAY #3'}", status=400, mimetype='application/json')
+    
+ 
    
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
@@ -102,16 +104,22 @@ def sign_claim():
             gtc_sig_app.logger.error(f'GTC Distributor - Error Hashing Message: {e}')
             return Response("{'message':'ERROR #1'}", status=500, mimetype='application/json')
 
+        # this is a bit of hack to avoid bug in old web3 - ZW 11/1/2020
+        # this will require that user_amount is not converted back to wei before tx is broadcast! 
+        user_amount_in_eth = Web3.fromWei(user_amount, 'ether')
+        
+        gtc_sig_app.logger.info(f'user_amount_in_eth: {user_amount_in_eth}')
         gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
        
         return_context = {
             "user_address" : user_address,
             "user_id" : user_id,
-            "user_amount" : user_amount,
+            "user_amount" : user_amount_in_eth,
             "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
             "eth_signed_signature_hex" : eth_signed_signature_hex,
         }
+
         # could just return the object above but I like to know
         response = gtc_sig_app.response_class(
             response=json.dumps(return_context),
