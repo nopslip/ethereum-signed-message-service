@@ -1,6 +1,6 @@
 ## Ethereum Signed Message Service 
 
-ESMS is a flask based HTTPS micro service that accepts metadata and returns a signed message. Provided the conditions are met, ESMS will return a valid EIP712 signed message signature and hash with the original metadata. 
+ESMS is a flask based HTTPS micro service that accepts metadata and returns an Ethereum signed message. Provided the conditions are met, ESMS will return a valid EIP712 signed message signature and hash with the original metadata. 
 
 HMAC authentication is used to verify the integrity of sender by requiring a valid HMAC signature in the HTTP headers of the request. 
 
