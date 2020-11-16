@@ -70,26 +70,26 @@ def sign_claim():
         return Response("{'message':'NOT OKAY #6'}", status=400, mimetype='application/json') 
     
     
-    # validate post body data - TODO - improve response to return valid json & proper status code 
+    # validate post body data 
     if not Web3.isAddress(user_address):
         gtc_sig_app.logger.info('Invalid user_address received!')
         return Response("{'message':'NOT OKAY #1'}", status=400, mimetype='application/json')
-    # check we have an integer - improve me
-    # TODO - check that user_id is within bounds of total known legit user_id's, if not, we want to be notified 
+    # make sure user_id is an integer 
     try:
         int(user_id)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_id received!')
         return Response("{'message':'NOT OKAY #2'}", status=400, mimetype='application/json')
-   
+    # make sure user_amount is an integer 
     try: 
         int(user_amount)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response("{'message':'NOT OKAY #3'}", status=400, mimetype='application/json')
     
- 
-   
+    # TODO --> connect to cloud key value pair store & confirm the user_id AND user_amount match
+    # If no match, reject claim, and log suspicious event  
+    
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
         gtc_sig_app.logger.info('POST HMAC DIGEST MATCHES!')
@@ -138,95 +138,6 @@ def sign_claim():
     
     # default return 
     return Response("{'message':'OKAY!'}", status=200, mimetype='application/json')
-
-# legacy 
-@gtc_sig_app.route('/get_signature', methods=['POST'])
-def get_signature():
-    '''
-    This is the legacy route used by the micro service to accept POST requests
-    and return the transaction data required for users to claim GTC tokens.
-    This route is be replaced with EIP712 compliant /v1/sign_claim
-    '''
-
-    # confirm we have our envars 
-    if "GTC_SIG_KEY" in os.environ:
-        GTC_SIG_KEY = os.environ.get('GTC_SIG_KEY')
-    else: 
-        gtc_sig_app.logger.info('GTC_SIG_KEY not found!')
-        return "NO GTC_SIG_KEY FOUND!"
-
-    if "PRIVATE_KEY" in os.environ:
-        PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
-    else: 
-        gtc_sig_app.logger.info('PRIVATE_KEY not found!')
-        return "NO PRIVATE_KEY FOUND!"
-    
-    # extract our headers 
-    headers = request.headers
-
-    # log headers for debugging 
-    gtc_sig_app.logger.info(f'Incoming POST request headers:{request.headers}')
-    
-    # extract POST data as json 
-    json_request = request.get_json()
-
-    # log POST data for debugging 
-    gtc_sig_app.logger.info(f'POST BODY DATA:{json_request}')
-    
-    # calc HMAC hash for our POST data
-    computed_hash = create_sha256_signature(GTC_SIG_KEY, json.dumps(json_request))
-    
-    # log computed hash for debugging 
-    gtc_sig_app.logger.info(f'COMPUTED HASH: {computed_hash}')
-
-    # extract post data body
-    user_address = json_request['user_address']
-    user_id = json_request['user_id']
-    user_amount = json_request['user_amount'] 
-    
-    # validate post body data - TODO - improve response to return valid json & proper status code 
-    if not Web3.isAddress(user_address):
-        gtc_sig_app.logger.info('Invalid user_address received!')
-        return "THERE WAS AN ISSUE!"
-    # check we have an integer - improve me
-    try:
-        int(user_id)
-    except ValueError:
-        gtc_sig_app.logger.info('Invalid user_id received!')
-        return "THERE WAS AN ISSUE!"
-    # check user id is an int - improve me 
-    try: 
-        int(user_amount)
-    except ValueError:
-        gtc_sig_app.logger.info('Invalid user_amount received!')
-        return "THERE WAS AN ISSUE!"
-
-    # if the hashes match, we proceed to created eth signed message  
-    if headers['X-GITCOIN-SIG'] == computed_hash:
-        gtc_sig_app.logger.info('HASH MATCH!')
-        
-        msg_hash_hex = keccak_hash(user_address, user_id, user_amount)
-        gtc_sig_app.logger.info(f'got keccak: {msg_hash_hex}')
-        
-        eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(msg_hash_hex, PRIVATE_KEY)
-
-        gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
-        gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
-        
-        return_context = {
-            "user_address" : user_address,
-            "user_id" : user_id,
-            "user_amount" : user_amount,
-            "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
-            "eth_signed_signature_hex" : eth_signed_signature_hex,
-        }
-        return return_context
-
-    # oh no, the hashes didn't match.    
-    else: 
-        gtc_sig_app.logger.info('HASH NO MATCH!!')
-        # TODO - set status code of 400 maybe?  
-        return "THERE WAS AN ISSUE!"
 
 @gtc_sig_app.before_request
 def before_request():
