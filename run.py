@@ -80,9 +80,9 @@ def sign_claim():
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_id received!')
         return Response("{'message':'NOT OKAY #2'}", status=400, mimetype='application/json')
-    # make sure user_amount is an integer 
+    # make sure user_amount is an str
     try: 
-        int(user_amount)
+        str(user_amount)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response("{'message':'NOT OKAY #3'}", status=400, mimetype='application/json')
