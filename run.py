@@ -61,7 +61,7 @@ def sign_claim():
     try: 
         user_id = json_request['user_id']
         user_address = json_request['user_address']
-        user_amount = json_request['user_amount']
+        user_amount = int(json_request['user_amount']) # comes as string, convert to int for hasing 
     except TypeError:
         gtc_sig_app.logger.info('Generic POST data TypeError received - confirm required values have been provided in POST payload')
         return Response("{'message':'NOT OKAY #5'}", status=400, mimetype='application/json')
@@ -80,9 +80,9 @@ def sign_claim():
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_id received!')
         return Response("{'message':'NOT OKAY #2'}", status=400, mimetype='application/json')
-    # make sure user_amount is an str
+    # make sure it's an int
     try: 
-        str(user_amount)
+        int(user_amount)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response("{'message':'NOT OKAY #3'}", status=400, mimetype='application/json')
@@ -162,7 +162,7 @@ def create_sha256_signature(key, message):
         message = message.encode()
         return hmac.new(byte_key, message, hashlib.sha256).hexdigest().upper()
     except Exception as e:
-        gtc_sig_app.logger.error(f'GTC Distributor - Error Hashing Message: {e}')
+        gtc_sig_app.logger.error(f'ESMS - Error Hashing Message: {e}')
         return False 
 
 def keccak_hash(user_address, user_id, user_amount):
