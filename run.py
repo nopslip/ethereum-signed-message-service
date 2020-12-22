@@ -61,19 +61,22 @@ def sign_claim():
     try: 
         user_id = json_request['user_id']
         user_address = json_request['user_address']
-        user_amount = int(json_request['user_amount']) # comes as string, convert to int for hasing 
+        user_amount = json_request['user_amount']
+        delegate_address =  json_request['delegate_address']
     except TypeError:
         gtc_sig_app.logger.info('Generic POST data TypeError received - confirm required values have been provided in POST payload')
         return Response("{'message':'NOT OKAY #5'}", status=400, mimetype='application/json')
     except Exception as e:
         gtc_sig_app.logger.error(f'GTC Claim Generator error: {e}')
         return Response("{'message':'NOT OKAY #6'}", status=400, mimetype='application/json') 
-    
-    
+        
     # validate post body data 
     if not Web3.isAddress(user_address):
         gtc_sig_app.logger.info('Invalid user_address received!')
         return Response("{'message':'NOT OKAY #1'}", status=400, mimetype='application/json')
+    if not Web3.isAddress(delegate_address):
+        gtc_sig_app.logger.info('Invalid delegate_address received!')
+        return Response("{'message':'NOT OKAY #1.5'}", status=400, mimetype='application/json')
     # make sure user_id is an integer 
     try:
         int(user_id)
@@ -95,7 +98,7 @@ def sign_claim():
         gtc_sig_app.logger.info('POST HMAC DIGEST MATCHES!')
         
         # build out EIP712 struct 
-        signable_message = createSignableStruct(user_id, user_address, user_amount)
+        signable_message = createSignableStruct(user_id, user_address, user_amount, delegate_address)
         
         # sign it up
         try:
@@ -114,6 +117,7 @@ def sign_claim():
        
         return_context = {
             "user_address" : user_address,
+            "delegate_address" : delegate_address,
             "user_id" : user_id,
             "user_amount" : str(user_amount_in_eth),
             "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
@@ -195,7 +199,7 @@ def eth_sign_2(claim_msg_json):
     signed_message = Account.sign_message(signable_message, private_key=PRIVATE_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
-def createSignableStruct(user_id, user_address, user_amount):
+def createSignableStruct(user_id, user_address, user_amount, delegate_address):
     '''
     crafts a signable struct using - https://github.com/ConsenSys/py-eip712-structs
     '''
@@ -212,12 +216,14 @@ def createSignableStruct(user_id, user_address, user_amount):
         user_id = Uint(32)
         user_address = Address()
         user_amount = Uint(256)
+        delegate_address = Address()
 
     # Create an instance with some data
     claim = Claim(
         user_id=user_id,
         user_address=user_address,
-        user_amount=user_amount)
+        user_amount=user_amount, 
+        delegate_address=delegate_address)
 
     # Into message JSON - This method converts bytes types for you, which the default JSON encoder won't handle.
     claim_msg_json = claim.to_message_json(domain)
