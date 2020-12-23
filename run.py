@@ -209,7 +209,7 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address):
         name='WOLF', 
         version='1.0.1', 
         chainId=4, 
-        verifyingContract='0xa8FF6B461123f896F667057f4d3E3DE6362E7ccb')  
+        verifyingContract='0x5D9aBdA108De232a971D3bF5a72237920D7Fb61d')  
 
     # Define our struct type
     class Claim(EIP712Struct):
