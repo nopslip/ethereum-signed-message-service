@@ -204,12 +204,12 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address):
     crafts a signable struct using - https://github.com/ConsenSys/py-eip712-structs
     '''
 
-    # Make a unique domain seperator - contract addy is just random rinkeby address for me for testing 
+    # Make a unique domain seperator - contract addy is for the TokenDistributor 
     domain = make_domain(
         name='WOLF', 
         version='1.0.1', 
         chainId=4, 
-        verifyingContract='0x5D9aBdA108De232a971D3bF5a72237920D7Fb61d')  
+        verifyingContract='0x8c81B26d50fd12E8979D98231d40948bec50cF3C')  
 
     # Define our struct type
     class Claim(EIP712Struct):
