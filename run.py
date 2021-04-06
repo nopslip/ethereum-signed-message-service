@@ -29,11 +29,11 @@ if "PRIVATE_KEY" in os.environ:
 else: 
     shutdown_server('PRIVATE_KEY not found!')
 
-# try:
-#    with open('./dist_proofs.json') as d:
-#        gtc_sig_app.logger.info(f'dist_proofs: {d[0]}')
-#except:
-#    gtc_sig_app.logger.error('There was an error opening proof claims file!')
+try:
+    with open('./dist_proofs.json') as d:
+        gtc_sig_app.logger.info(f'dist_proofs: {d[0]}')
+except:
+    gtc_sig_app.logger.error('There was an error opening proof claims file!')
 
 
 @gtc_sig_app.route('/')
