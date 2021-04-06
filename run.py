@@ -29,6 +29,13 @@ if "PRIVATE_KEY" in os.environ:
 else: 
     shutdown_server('PRIVATE_KEY not found!')
 
+try:
+    with open('dist_proofs.json') as d:
+        gtc_sig_app.logger.info(f'dist_proofs: {d[0]}')
+except:
+    gtc_sig_app.logger.error('There was an error opening proof claims file!')
+
+
 @gtc_sig_app.route('/')
 def hello_world():
     return '--SERVER IS LIVE!--'
@@ -89,10 +96,7 @@ def sign_claim():
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response("{'message':'NOT OKAY #3'}", status=400, mimetype='application/json')
-    
-    # TODO --> connect to cloud key value pair store & confirm the user_id AND user_amount match
-    # If no match, reject claim, and log suspicious event  
-    
+ 
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
         gtc_sig_app.logger.info('POST HMAC DIGEST MATCHES!')
