@@ -35,7 +35,6 @@ try:
         proofs = list(json.load(d).items())
         # print(proofs[0][1]['claim'])
         # print(proofs[0][1]['proof'])
-
 except:
     gtc_sig_app.logger.error('There was an error opening proof claims file!')
     shutdown_server('ProofClaim file is required')
@@ -103,9 +102,9 @@ def sign_claim():
     # get proof info for user
     try: 
         claim = proofs[user_id][1]['claim']
-        gtc_sig_app.logger(f'claim: {claim}')
         proof = proofs[user_id][1]['proof']
-        gtc_sig_app.logger(f'proof: {proof}')
+        gtc_sig_app.logger.info(f'claim: {claim}')
+        gtc_sig_app.logger.info(f'proof: {proof}')
     except:
         gtc_sig_app.logger.error('There was an error getting user claim proof!')
         return Response("{'message':'NOT OKAY #7'}", status=400, mimetype='application/json')
