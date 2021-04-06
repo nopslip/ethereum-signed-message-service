@@ -33,8 +33,6 @@ try:
     with open('dist_proofs.json') as d:
         gtc_sig_app.logger.info('Successfully opened dist_proofs.json')
         proofs = list(json.load(d).items())
-        # print(proofs[0][1]['claim'])
-        # print(proofs[0][1]['proof'])
 except:
     gtc_sig_app.logger.error('There was an error opening proof claims file!')
     shutdown_server('ProofClaim file is required')
@@ -117,7 +115,7 @@ def sign_claim():
         
         # sign it up
         try:
-            eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign_2(signable_message)
+            eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(signable_message)
         except Exception as e:
             gtc_sig_app.logger.error(f'GTC Distributor - Error Hashing Message: {e}')
             return Response("{'message':'ERROR #1'}", status=500, mimetype='application/json')
@@ -129,6 +127,8 @@ def sign_claim():
         gtc_sig_app.logger.info(f'user_amount_in_eth: {user_amount_in_eth}')
         gtc_sig_app.logger.info(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.info(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
+        gtc_sig_app.logger.info(f'claim hash: {claim}')
+        gtc_sig_app.logger.info(f'proof: {proof}')
        
         return_context = {
             "user_address" : user_address,
@@ -137,6 +137,8 @@ def sign_claim():
             "user_amount" : str(user_amount_in_eth),
             "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
             "eth_signed_signature_hex" : eth_signed_signature_hex,
+            "claim" : claim,
+            "proof" : proof
         }
 
         # could just return the object above but I like to know
@@ -148,8 +150,8 @@ def sign_claim():
         # all is well, return response 
         return response
         
-
-    # The HMAC didn't match, this should be considered suspicious & investigated in prod     
+    # The HMAC didn't match, this should be considered suspicious & investigated in prod
+    # TODO create monitor/alert for this log      
     else: 
         gtc_sig_app.logger.info('HMAC HASH DID NOT MATCH!!')
         return Response("{'message':'NOT OKAY #4'}", status=401, mimetype='application/json')
@@ -161,15 +163,6 @@ def sign_claim():
 @gtc_sig_app.before_request
 def before_request():
     print(request.method, request.endpoint, request.data)
-
-
-def shutdown_server(message):
-    ''' 
-    In the event that we want to kill the server (or prevent it from starting)
-    '''
-    gtc_sig_app.logger.info(message)
-    raise RuntimeError(message)
-
 
 def create_sha256_signature(key, message):
     '''
@@ -184,28 +177,7 @@ def create_sha256_signature(key, message):
         gtc_sig_app.logger.error(f'ESMS - Error Hashing Message: {e}')
         return False 
 
-def keccak_hash(user_address, user_id, user_amount):
-    '''
-    Provided user address, id, & token distribution amount
-    returns solidity style keccak hash of the values - msg_hash_hex 
-    '''
-    # make sure our address is check summed 
-    check_summed_address = Web3.toChecksumAddress(user_address)
-    
-    # unsure why it returns bytes and/or what solidity will do this should suffice for now
-    return Web3.toHex(Web3.solidityKeccak(['uint32', 'address', 'uint256'], [user_id, check_summed_address, user_amount]))
- 
-
-def eth_sign(msg_hash_hex, PRIVATE_KEY):
-    '''
-    Signs a message using Ethereum private key
-    returns messageHash in HexBytes & signature in HexBytes
-    '''
-    message = messages.encode_defunct(hexstr=msg_hash_hex)
-    signed_message = Account.sign_message(message, private_key=PRIVATE_KEY)
-    return signed_message.messageHash.hex(), signed_message.signature.hex()
-
-def eth_sign_2(claim_msg_json):
+def eth_sign(claim_msg_json):
     '''
     Signs an EIP712 compliant message using Ethereum private key
     returns messageHash in HexBytes & signature in HexBytes
@@ -224,7 +196,7 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address):
         name='WOLF', 
         version='1.0.1', 
         chainId=4, 
-        verifyingContract='0x8c81B26d50fd12E8979D98231d40948bec50cF3C')  
+        verifyingContract='0x16765ECF8c718ac2e30e8C7e918Aca41145f0E7b')  
 
     # Define our struct type
     class Claim(EIP712Struct):
@@ -245,6 +217,12 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address):
   
     return claim_msg_json
 
+def shutdown_server(message):
+    ''' 
+    In the event that we want to kill the server (or prevent it from starting)
+    '''
+    gtc_sig_app.logger.info(message)
+    raise RuntimeError(message)
 
 if __name__ == '__main__':
     gtc_sig_app.run()
