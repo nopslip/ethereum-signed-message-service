@@ -30,11 +30,15 @@ else:
     shutdown_server('PRIVATE_KEY not found!')
 
 try:
-    with open('./dist_proofs.json') as d:
-        gtc_sig_app.logger.info(f'dist_proofs: {d[0]}')
+    with open('dist_proofs.json') as d:
+        gtc_sig_app.logger.info('Successfully opened dist_proofs.json')
+        proofs = list(json.load(d).items())
+        # print(proofs[0][1]['claim'])
+        # print(proofs[0][1]['proof'])
+
 except:
     gtc_sig_app.logger.error('There was an error opening proof claims file!')
-
+    shutdown_server('ProofClaim file is required')
 
 @gtc_sig_app.route('/')
 def hello_world():
@@ -96,7 +100,15 @@ def sign_claim():
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response("{'message':'NOT OKAY #3'}", status=400, mimetype='application/json')
- 
+    # get proof info for user
+    try: 
+        claim = proofs[user_id][1]['claim']
+        gtc_sig_app.logger(f'claim: {claim}')
+        proof = proofs[user_id][1]['proof']
+        gtc_sig_app.logger(f'proof: {proof}')
+    except:
+        gtc_sig_app.logger.error('There was an error getting user claim proof!')
+        return Response("{'message':'NOT OKAY #7'}", status=400, mimetype='application/json')
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
         gtc_sig_app.logger.info('POST HMAC DIGEST MATCHES!')
