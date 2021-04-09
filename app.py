@@ -104,9 +104,9 @@ def sign_claim():
         return Response("{'message':'ESMS error: 6'}", status=400, mimetype='application/json')
     # get proof info for user
     try: 
-        claim = proofs[user_id][1]['claim']
+        leaf = proofs[user_id][1]['claim']
         proof = proofs[user_id][1]['proof']
-        gtc_sig_app.logger.debug(f'claim: {claim}')
+        gtc_sig_app.logger.debug(f'claim: {leaf}')
         gtc_sig_app.logger.debug(f'proof: {proof}')
     except:
         gtc_sig_app.logger.error('There was an error getting user claim proof!')
@@ -116,7 +116,7 @@ def sign_claim():
         gtc_sig_app.logger.debug('POST HMAC DIGEST MATCHES!')
         
         # build out EIP712 struct 
-        signable_message = createSignableStruct(user_id, user_address, user_amount, delegate_address)
+        signable_message = createSignableStruct(user_id, user_address, user_amount, delegate_address, leaf)
         
         # sign it up
         try:
@@ -132,7 +132,7 @@ def sign_claim():
         gtc_sig_app.logger.debug(f'user_amount_in_eth: {user_amount_in_eth}')
         gtc_sig_app.logger.debug(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.debug(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
-        gtc_sig_app.logger.debug(f'claim hash: {claim}')
+        gtc_sig_app.logger.debug(f'leaf hash: {leaf}')
         gtc_sig_app.logger.debug(f'proof: {proof}')
        
         return_context = {
@@ -142,7 +142,7 @@ def sign_claim():
             "user_amount" : str(user_amount_in_eth),
             "eth_signed_message_hash_hex" : eth_signed_message_hash_hex,
             "eth_signed_signature_hex" : eth_signed_signature_hex,
-            "claim" : claim,
+            "leaf" : leaf,
             "proof" : proof
         }
 
@@ -191,17 +191,17 @@ def eth_sign(claim_msg_json):
     signed_message = Account.sign_message(signable_message, private_key=PRIVATE_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
-def createSignableStruct(user_id, user_address, user_amount, delegate_address):
+def createSignableStruct(user_id, user_address, user_amount, delegate_address, leaf):
     '''
     crafts a signable struct using - https://github.com/ConsenSys/py-eip712-structs
     '''
 
     # Make a unique domain seperator - contract address is for the TokenDistributor 
     domain = make_domain(
-        name='WOLF', 
-        version='1.0.1', 
+        name='GTA', 
+        version='1.0.0', 
         chainId=4, 
-        verifyingContract='0x16765ECF8c718ac2e30e8C7e918Aca41145f0E7b')  
+        verifyingContract='0x40a7e0B6EF7ad50423C166F0CB4e4E9658544aDB')  
 
     # Define our struct type
     class Claim(EIP712Struct):
@@ -209,13 +209,15 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address):
         user_address = Address()
         user_amount = Uint(256)
         delegate_address = Address()
+        leaf = bytes32
 
     # Create an instance with some data
     claim = Claim(
         user_id=user_id,
         user_address=user_address,
         user_amount=user_amount, 
-        delegate_address=delegate_address)
+        delegate_address=delegate_address,
+        leaf=leaf)
 
     # Into message JSON - This method converts bytes types for you, which the default JSON encoder won't handle.
     claim_msg_json = claim.to_message_json(domain)
