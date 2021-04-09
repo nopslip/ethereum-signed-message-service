@@ -12,7 +12,7 @@ from web3 import Web3
 from eth_account import Account, messages
 
 from eip712_structs import make_domain
-from eip712_structs import EIP712Struct, Uint, Address, make_domain
+from eip712_structs import EIP712Struct, Uint, Address, Bytes, make_domain
 
 gtc_sig_app = Flask(__name__)
 gtc_sig_app.debug = True
@@ -106,8 +106,9 @@ def sign_claim():
     try: 
         leaf = proofs[user_id][1]['claim']
         proof = proofs[user_id][1]['proof']
-        gtc_sig_app.logger.debug(f'claim: {leaf}')
+        gtc_sig_app.logger.debug(f'leaf: {leaf}')
         gtc_sig_app.logger.debug(f'proof: {proof}')
+        leaf_bytes = Web3.toBytes(hexstr=leaf)
     except:
         gtc_sig_app.logger.error('There was an error getting user claim proof!')
         return Response("{'message':'ESMS error: 7'}", status=400, mimetype='application/json')
@@ -116,8 +117,7 @@ def sign_claim():
         gtc_sig_app.logger.debug('POST HMAC DIGEST MATCHES!')
         
         # build out EIP712 struct 
-        signable_message = createSignableStruct(user_id, user_address, user_amount, delegate_address, leaf)
-        
+        signable_message = createSignableStruct(user_id, user_address, user_amount, delegate_address, leaf_bytes) 
         # sign it up
         try:
             eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(signable_message)
@@ -182,12 +182,14 @@ def create_sha256_signature(key, message):
         gtc_sig_app.logger.error(f'ESMS - Error Hashing Message: {e}')
         return False 
 
-def eth_sign(claim_msg_json):
+def eth_sign(claim_msg):
     '''
     Signs an EIP712 compliant message using Ethereum private key
     returns messageHash in HexBytes & signature in HexBytes
     '''
-    signable_message = messages.encode_structured_data(text=claim_msg_json)
+    print(f'CLAIM MSG before siging {claim_msg}')
+    signable_message = messages.encode_structured_data(claim_msg)
+    print(f'CLAIM MSG ready to sig {signable_message}')
     signed_message = Account.sign_message(signable_message, private_key=PRIVATE_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
@@ -195,7 +197,6 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address, l
     '''
     crafts a signable struct using - https://github.com/ConsenSys/py-eip712-structs
     '''
-
     # Make a unique domain seperator - contract address is for the TokenDistributor 
     domain = make_domain(
         name='GTA',
@@ -209,20 +210,21 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address, l
         user_address = Address()
         user_amount = Uint(256)
         delegate_address = Address()
-        leaf = bytes(32)
+        leaf = Bytes(32)
 
     # Create an instance with some data
     claim = Claim(
         user_id=user_id,
         user_address=user_address,
-        user_amount=user_amount, 
+        user_amount=user_amount,
         delegate_address=delegate_address,
         leaf=leaf)
 
     # Into message JSON - This method converts bytes types for you, which the default JSON encoder won't handle.
-    claim_msg_json = claim.to_message_json(domain)
-  
-    return claim_msg_json
+    # claim_msg_json = claim.to_message_json(domain)
+    # claim_msg_bytes = claim.signable_bytes(domain) 
+    claim_msg_dict = claim.to_message(domain)
+    return claim_msg_dict
 
 if __name__ == '__main__':
     gtc_sig_app.run()
