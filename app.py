@@ -102,8 +102,6 @@ def sign_claim():
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json') 
-    # confirm user_id is within bounds
-    try:
     # get leaf and proofs for user
     try: 
         leaf = proofs[user_id][1]['claim']
