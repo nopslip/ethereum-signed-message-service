@@ -187,9 +187,7 @@ def eth_sign(claim_msg):
     Signs an EIP712 compliant message using Ethereum private key
     returns messageHash in HexBytes & signature in HexBytes
     '''
-    print(f'CLAIM MSG before siging {claim_msg}')
     signable_message = messages.encode_structured_data(claim_msg)
-    print(f'CLAIM MSG ready to sig {signable_message}')
     signed_message = Account.sign_message(signable_message, private_key=PRIVATE_KEY)
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
