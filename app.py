@@ -198,10 +198,10 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address, l
 
     # Make a unique domain seperator - contract address is for the TokenDistributor 
     domain = make_domain(
-        name='GTA', 
-        version='1.0.0', 
-        chainId=4, 
-        verifyingContract='0x40a7e0B6EF7ad50423C166F0CB4e4E9658544aDB')  
+        name='GTA',
+        version='1.0.0',
+        chainId=4,
+        verifyingContract='0x38DD178f9B3aC01a58ea493524003b3413F9c49b')
 
     # Define our struct type
     class Claim(EIP712Struct):
@@ -209,7 +209,7 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address, l
         user_address = Address()
         user_amount = Uint(256)
         delegate_address = Address()
-        leaf = bytes32
+        leaf = bytes(32)
 
     # Create an instance with some data
     claim = Claim(
