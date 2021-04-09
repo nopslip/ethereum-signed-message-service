@@ -78,30 +78,30 @@ def sign_claim():
         delegate_address =  json_request['delegate_address']
     except TypeError:
         gtc_sig_app.logger.info('Generic POST data TypeError received - confirm required values have been provided in POST payload')
-        return Response("{'message':'ESMS error: 1'}", status=400, mimetype='application/json')
+        return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     except Exception as e:
         gtc_sig_app.logger.error(f'GTC Claim Generator error: {e}')
-        return Response("{'message':'ESMS error: 2'}", status=400, mimetype='application/json') 
+        return Response('{"message":"ESMS error"}', status=400, mimetype='application/json') 
         
     # validate post body data 
     if not Web3.isAddress(user_address):
         gtc_sig_app.logger.info('Invalid user_address received!')
-        return Response("{'message':'ESMS error: 3'}", status=400, mimetype='application/json')
+        return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     if not Web3.isAddress(delegate_address):
         gtc_sig_app.logger.info('Invalid delegate_address received!')
-        return Response("{'message':'ESMS error: 4'}", status=400, mimetype='application/json')
+        return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     # make sure user_id is an integer 
     try:
         int(user_id)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_id received!')
-        return Response("{'message':'ESMS error: 5'}", status=400, mimetype='application/json')
+        return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     # make sure it's an int
     try: 
         int(user_amount)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
-        return Response("{'message':'ESMS error: 6'}", status=400, mimetype='application/json') 
+        return Response('{"message":"ESMS error"}', status=400, mimetype='application/json') 
     # confirm user_id is within bounds
     try:
     # get leaf and proofs for user
@@ -113,7 +113,7 @@ def sign_claim():
         leaf_bytes = Web3.toBytes(hexstr=leaf)
     except Exception as e:
         gtc_sig_app.logger.error(f'There was an error getting user claim proof: {e}')
-        return Response("{'message':'ESMS error: 7'}", status=400, mimetype='application/json')
+        return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
         gtc_sig_app.logger.debug('POST HMAC DIGEST MATCHES!')
@@ -125,7 +125,7 @@ def sign_claim():
             eth_signed_message_hash_hex, eth_signed_signature_hex = eth_sign(signable_message)
         except Exception as e:
             gtc_sig_app.logger.error(f'GTC Distributor - Error Hashing Message: {e}')
-            return Response("{'message':'ESMS error: 8'}", status=500, mimetype='application/json')
+            return Response('{"message":"ESMS error"}', status=500, mimetype='application/json')
 
         # this is a bit of hack to avoid bug in old web3 - ZW 11/1/2020
         # this will require that user_amount is not converted back to wei before tx is broadcast! 
@@ -161,11 +161,11 @@ def sign_claim():
     # TODO create monitor/alert for this log      
     else: 
         gtc_sig_app.logger.info(f'HMAC hash did not match from IP: {ip_address} - This could be an attempt to generate a fraudulent claim!')
-        return Response("{'message':'ESMS error: 9'}", status=401, mimetype='application/json')
+        return Response('{"message":"ESMS error"}', status=401, mimetype='application/json')
     
     
     # default catch/all return - this shouldn't ever hit  
-    return Response("{'message':'generic server response!'}", status=200, mimetype='application/json')
+    return Response('{"message":"HELLO-WORLD"}', status=200, mimetype='application/json')
 
 @gtc_sig_app.before_request
 def before_request():
@@ -197,12 +197,14 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address, l
     '''
     crafts a signable struct using - https://github.com/ConsenSys/py-eip712-structs
     '''
-    # Make a unique domain seperator - contract address is for the TokenDistributor 
+    # Make a unique domain seperator - contract address is for the TokenDistributor
+    # verifyingContract='0xBD2525B5F0B2a663439a78A99A06605549D25cE5' # rinkeby leaf fam
+    # verifyingContract='0x40a7e0B6EF7ad50423C166F0CB4e4E9658544aDB' # local testing fam 
     domain = make_domain(
         name='GTA',
         version='1.0.0',
         chainId=4,
-        verifyingContract='0x38DD178f9B3aC01a58ea493524003b3413F9c49b')
+        verifyingContract='0x40a7e0B6EF7ad50423C166F0CB4e4E9658544aDB') 
 
     # Define our struct type
     class Claim(EIP712Struct):
