@@ -101,16 +101,18 @@ def sign_claim():
         int(user_amount)
     except ValueError:
         gtc_sig_app.logger.info('Invalid user_amount received!')
-        return Response("{'message':'ESMS error: 6'}", status=400, mimetype='application/json')
-    # get proof info for user
+        return Response("{'message':'ESMS error: 6'}", status=400, mimetype='application/json') 
+    # confirm user_id is within bounds
+    try:
+    # get leaf and proofs for user
     try: 
         leaf = proofs[user_id][1]['claim']
         proof = proofs[user_id][1]['proof']
         gtc_sig_app.logger.debug(f'leaf: {leaf}')
         gtc_sig_app.logger.debug(f'proof: {proof}')
         leaf_bytes = Web3.toBytes(hexstr=leaf)
-    except:
-        gtc_sig_app.logger.error('There was an error getting user claim proof!')
+    except Exception as e:
+        gtc_sig_app.logger.error(f'There was an error getting user claim proof: {e}')
         return Response("{'message':'ESMS error: 7'}", status=400, mimetype='application/json')
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
