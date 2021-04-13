@@ -15,7 +15,7 @@ from eip712_structs import make_domain
 from eip712_structs import EIP712Struct, Uint, Address, Bytes, make_domain
 
 gtc_sig_app = Flask(__name__)
-gtc_sig_app.debug = True
+gtc_sig_app.debug = False
 
 def shutdown_server(message):
     ''' 
@@ -39,7 +39,8 @@ else:
 try:
     with open('dist_proofs.json') as d:
         gtc_sig_app.logger.info('Successfully opened dist_proofs.json')
-        proofs = list(json.load(d).items())
+        proofs = json.load(d)
+        # proofs = list(json.load(d).items())
 except:
     gtc_sig_app.logger.error('There was an error opening proof claims file!')
     shutdown_server('ProofClaim file is required')
@@ -103,11 +104,11 @@ def sign_claim():
         gtc_sig_app.logger.info('Invalid user_amount received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json') 
     # get leaf and proofs for user
-    try: 
-        leaf = proofs[user_id][1]['leaf']
-        proof = proofs[user_id][1]['proof']
-        gtc_sig_app.logger.debug(f'leaf: {leaf}')
-        gtc_sig_app.logger.debug(f'proof: {proof}')
+    try:
+        leaf = proofs[str(user_id)]['leaf']
+        proof = proofs[str(user_id)]['proof']
+        # gtc_sig_app.logger.debug(f'leaf: {leaf}')
+        # gtc_sig_app.logger.debug(f'proof: {proof}')
         leaf_bytes = Web3.toBytes(hexstr=leaf)
     except Exception as e:
         gtc_sig_app.logger.error(f'There was an error getting user claim proof: {e}')
