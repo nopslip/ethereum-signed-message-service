@@ -104,7 +104,7 @@ def sign_claim():
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json') 
     # get leaf and proofs for user
     try: 
-        leaf = proofs[user_id][1]['claim']
+        leaf = proofs[user_id][1]['leaf']
         proof = proofs[user_id][1]['proof']
         gtc_sig_app.logger.debug(f'leaf: {leaf}')
         gtc_sig_app.logger.debug(f'proof: {proof}')
@@ -202,7 +202,7 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address, l
         name='GTA',
         version='1.0.0',
         chainId=4,
-        verifyingContract='0x40a7e0B6EF7ad50423C166F0CB4e4E9658544aDB') 
+        verifyingContract='0xBD2525B5F0B2a663439a78A99A06605549D25cE5') 
 
     # Define our struct type
     class Claim(EIP712Struct):
