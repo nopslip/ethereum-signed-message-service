@@ -15,7 +15,7 @@ from eip712_structs import make_domain
 from eip712_structs import EIP712Struct, Uint, Address, Bytes, make_domain
 
 gtc_sig_app = Flask(__name__)
-gtc_sig_app.debug = False
+gtc_sig_app.debug = True
 
 def shutdown_server(message):
     ''' 
@@ -24,26 +24,26 @@ def shutdown_server(message):
     gtc_sig_app.logger.info(message)
     raise RuntimeError(message)
 
-# confirm we have our envars or don't start server 
+# confirm we have our envars or don't start server
 if "GTC_SIG_KEY" in os.environ:
     GTC_SIG_KEY = os.environ.get('GTC_SIG_KEY')
-else: 
+else:
     shutdown_server('No GTC_SIG_KEY found! Server will stop.')
 
 if "PRIVATE_KEY" in os.environ:
     PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
-else: 
+else:
     shutdown_server('PRIVATE_KEY not found!')
 
-# import the distribution proofs 
+# import the distribution proofs
 try:
-    with open('dist_proofs.json') as d:
+    with open('dist_proofs.json') as data:
         gtc_sig_app.logger.info('Successfully opened dist_proofs.json')
-        proofs = json.load(d)
-        # proofs = list(json.load(d).items())
+        proofs = json.load(data)
 except:
-    gtc_sig_app.logger.error('There was an error opening proof claims file!')
-    shutdown_server('ProofClaim file is required')
+    msg = "There was an issue opening proof claim file. Service shutting down..."
+    gtc_sig_app.logger.error(msg)
+    shutdown_server(msg)
 
 @gtc_sig_app.route('/')
 def hello_world():
@@ -59,20 +59,20 @@ def sign_claim():
     ip_address = request.remote_addr
     gtc_sig_app.logger.info(f'Request IP: {ip_address}')
 
-    # extract our headers, log headers for debugging 
+    # extract our headers, log headers for debugging
     headers = request.headers
     gtc_sig_app.logger.debug(f'Incoming POST request headers:{request.headers}')
-    
-    # extract POST data as json, log POST data for debugging 
+
+    # extract POST data as json, log POST data for debugging
     json_request = request.get_json()
     gtc_sig_app.logger.debug(f'POST BODY DATA:{json_request}')
-    
-    # calc HMAC hash for our POST data, log computed hash for debugging 
+
+    # calc HMAC hash for our POST data, log computed hash for debugging
     computed_hash = create_sha256_signature(GTC_SIG_KEY, json.dumps(json_request))
     gtc_sig_app.logger.debug(f'COMPUTED HASH: {computed_hash}')
-    
+
     # confirm we have POST data
-    try: 
+    try:
         user_id = json_request['user_id']
         user_address = json_request['user_address']
         user_amount = json_request['user_amount']
@@ -83,7 +83,7 @@ def sign_claim():
     except Exception as e:
         gtc_sig_app.logger.error(f'GTC Claim Generator error: {e}')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json') 
-        
+
     # validate post body data 
     if not Web3.isAddress(user_address):
         gtc_sig_app.logger.info('Invalid user_address received!')
@@ -107,8 +107,8 @@ def sign_claim():
     try:
         leaf = proofs[str(user_id)]['leaf']
         proof = proofs[str(user_id)]['proof']
-        # gtc_sig_app.logger.debug(f'leaf: {leaf}')
-        # gtc_sig_app.logger.debug(f'proof: {proof}')
+        gtc_sig_app.logger.debug(f'leaf: {leaf}')
+        gtc_sig_app.logger.debug(f'proof: {proof}')
         leaf_bytes = Web3.toBytes(hexstr=leaf)
     except Exception as e:
         gtc_sig_app.logger.error(f'There was an error getting user claim proof: {e}')
@@ -126,15 +126,16 @@ def sign_claim():
             gtc_sig_app.logger.error(f'GTC Distributor - Error Hashing Message: {e}')
             return Response('{"message":"ESMS error"}', status=500, mimetype='application/json')
 
-        # this is a bit of hack to avoid bug in old web3 - ZW 11/1/2020
-        # this will require that user_amount is not converted back to wei before tx is broadcast! 
+        # this is a bit of hack to avoid bug in old web3 on frontend
+        # this means that user_amount is not converted back to wei before tx is broadcast! 
         user_amount_in_eth = Web3.fromWei(user_amount, 'ether')
         
-        gtc_sig_app.logger.debug(f'user_amount_in_eth: {user_amount_in_eth}')
+        gtc_sig_app.logger.debug(f'user_id: {user_id}')
+        gtc_sig_app.logger.debug(f'user_amount_in_gtc: {user_amount_in_eth}')
         gtc_sig_app.logger.debug(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.debug(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
         gtc_sig_app.logger.debug(f'leaf hash: {leaf}')
-        gtc_sig_app.logger.debug(f'proof: {proof}')
+        # gtc_sig_app.logger.debug(f'proof: {proof}')
        
         return_context = {
             "user_address" : user_address,
@@ -168,7 +169,8 @@ def sign_claim():
 
 @gtc_sig_app.before_request
 def before_request():
-    print(request.method, request.endpoint, request.data)
+    pass
+    # gtc_sig_app.logger.debug(request.method, request.endpoint, request.data)
 
 def create_sha256_signature(key, message):
     '''
@@ -181,7 +183,7 @@ def create_sha256_signature(key, message):
         return hmac.new(byte_key, message, hashlib.sha256).hexdigest().upper()
     except Exception as e:
         gtc_sig_app.logger.error(f'ESMS - Error Hashing Message: {e}')
-        return False 
+        return False
 
 def eth_sign(claim_msg):
     '''
