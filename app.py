@@ -1,21 +1,24 @@
 import os
 import hmac
 import hashlib
-import binascii 
+import binascii
 import json
+import logging
 
 from flask import Flask
 from flask import request
 from flask import Response
 
-from web3 import Web3 
+from web3 import Web3
 from eth_account import Account, messages
 
 from eip712_structs import make_domain
 from eip712_structs import EIP712Struct, Uint, Address, Bytes, make_domain
 
 gtc_sig_app = Flask(__name__)
-gtc_sig_app.debug = True
+# gtc_sig_app.debug = True
+
+logging.basicConfig(filename='request-signer.log', level=logging.DEBUG, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 
 def shutdown_server(message):
     ''' 
@@ -86,37 +89,33 @@ def sign_claim():
 
     # validate post body data 
     if not Web3.isAddress(user_address):
-        gtc_sig_app.logger.info('Invalid user_address received!')
+        gtc_sig_app.logger.error('Invalid user_address received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     if not Web3.isAddress(delegate_address):
-        gtc_sig_app.logger.info('Invalid delegate_address received!')
+        gtc_sig_app.logger.error('Invalid delegate_address received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     # make sure user_id is an integer 
     try:
         int(user_id)
     except ValueError:
-        gtc_sig_app.logger.info('Invalid user_id received!')
+        gtc_sig_app.logger.error('Invalid user_id received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     # make sure it's an int
     try: 
         int(user_amount)
     except ValueError:
-        gtc_sig_app.logger.info('Invalid user_amount received!')
+        gtc_sig_app.logger.error('Invalid user_amount received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json') 
     # get leaf and proofs for user
     try:
         leaf = proofs[str(user_id)]['leaf']
         proof = proofs[str(user_id)]['proof']
-        gtc_sig_app.logger.debug(f'leaf: {leaf}')
-        gtc_sig_app.logger.debug(f'proof: {proof}')
         leaf_bytes = Web3.toBytes(hexstr=leaf)
     except Exception as e:
         gtc_sig_app.logger.error(f'There was an error getting user claim proof: {e}')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
-        gtc_sig_app.logger.debug('POST HMAC DIGEST MATCHES!')
-        
         # build out EIP712 struct 
         signable_message = createSignableStruct(user_id, user_address, user_amount, delegate_address, leaf_bytes) 
         # sign it up
@@ -169,8 +168,8 @@ def sign_claim():
 
 @gtc_sig_app.before_request
 def before_request():
-    pass
-    # gtc_sig_app.logger.debug(request.method, request.endpoint, request.data)
+    # pass
+    gtc_sig_app.logger.debug(request.method, request.endpoint, request.data)
 
 def create_sha256_signature(key, message):
     '''
