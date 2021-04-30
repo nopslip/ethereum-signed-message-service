@@ -15,38 +15,26 @@ from eth_account import Account, messages
 from eip712_structs import make_domain
 from eip712_structs import EIP712Struct, Uint, Address, Bytes, make_domain
 
+from dotenv import load_dotenv
+
+load_dotenv('.env')
+
 gtc_sig_app = Flask(__name__)
-# gtc_sig_app.debug = True
 
-logging.basicConfig(filename='request-signer.log', level=logging.DEBUG, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+# load our envars 
+gtc_sig_app.config.from_pyfile('setup.py')
 
-def shutdown_server(message):
-    ''' 
-    In the event that we want to kill the server (or prevent it from starting)
-    '''
-    gtc_sig_app.logger.info(message)
-    raise RuntimeError(message)
-
-# confirm we have our envars or don't start server
-if "GTC_SIG_KEY" in os.environ:
-    GTC_SIG_KEY = os.environ.get('GTC_SIG_KEY')
-else:
-    shutdown_server('No GTC_SIG_KEY found! Server will stop.')
-
-if "PRIVATE_KEY" in os.environ:
-    PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
-else:
-    shutdown_server('PRIVATE_KEY not found!')
-
-# import the distribution proofs
+# load the distribution proofs
 try:
     with open('dist_proofs.json') as data:
-        gtc_sig_app.logger.info('Successfully opened dist_proofs.json')
+        gtc_sig_app.logger.info('Successfully loaded distribution proofs.')
         proofs = json.load(data)
 except:
-    msg = "There was an issue opening proof claim file. Service shutting down..."
+    msg = "There was an issue opening distribution proof file."
     gtc_sig_app.logger.error(msg)
-    shutdown_server(msg)
+    raise RuntimeError(msg)
+
+gtc_sig_app.logger.info(gtc_sig_app.config.get("GTC_SIG_KEY"))
 
 @gtc_sig_app.route('/')
 def hello_world():
@@ -71,7 +59,7 @@ def sign_claim():
     gtc_sig_app.logger.debug(f'POST BODY DATA:{json_request}')
 
     # calc HMAC hash for our POST data, log computed hash for debugging
-    computed_hash = create_sha256_signature(GTC_SIG_KEY, json.dumps(json_request))
+    computed_hash = create_sha256_signature(gtc_sig_app.config.get("GTC_SIG_KEY"), json.dumps(json_request))
     gtc_sig_app.logger.debug(f'COMPUTED HASH: {computed_hash}')
 
     # confirm we have POST data
@@ -94,18 +82,21 @@ def sign_claim():
     if not Web3.isAddress(delegate_address):
         gtc_sig_app.logger.error('Invalid delegate_address received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
+    
     # make sure user_id is an integer 
     try:
-        int(user_id)
+        user_id = int(user_id)
     except ValueError:
         gtc_sig_app.logger.error('Invalid user_id received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
+    
     # make sure it's an int
     try: 
-        int(user_amount)
+        user_amount = int(user_amount)
     except ValueError:
         gtc_sig_app.logger.error('Invalid user_amount received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json') 
+    
     # get leaf and proofs for user
     try:
         leaf = proofs[str(user_id)]['leaf']
@@ -114,6 +105,7 @@ def sign_claim():
     except Exception as e:
         gtc_sig_app.logger.error(f'There was an error getting user claim proof: {e}')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
+    
     # check if the hashes match for HMAC sig, if so, we can proceed to created eth signed message  
     if headers['X-GITCOIN-SIG'] == computed_hash:
         # build out EIP712 struct 
@@ -153,23 +145,17 @@ def sign_claim():
             status=200,
             mimetype='application/json'
         )
+
         # all is well, return response 
         return response
         
     # The HMAC didn't match, this should be considered suspicious & investigated in prod
-    # TODO create monitor/alert for this log      
     else: 
         gtc_sig_app.logger.info(f'HMAC hash did not match from IP: {ip_address} - This could be an attempt to generate a fraudulent claim!')
         return Response('{"message":"ESMS error"}', status=401, mimetype='application/json')
-    
-    
+   
     # default catch/all return - this shouldn't ever hit  
     return Response('{"message":"HELLO-WORLD"}', status=200, mimetype='application/json')
-
-@gtc_sig_app.before_request
-def before_request():
-    # pass
-    gtc_sig_app.logger.debug(request.method, request.endpoint, request.data)
 
 def create_sha256_signature(key, message):
     '''
@@ -190,7 +176,7 @@ def eth_sign(claim_msg):
     returns messageHash in HexBytes & signature in HexBytes
     '''
     signable_message = messages.encode_structured_data(claim_msg)
-    signed_message = Account.sign_message(signable_message, private_key=PRIVATE_KEY)
+    signed_message = Account.sign_message(signable_message, private_key=gtc_sig_app.config.get("PRIVATE_KEY"))
     return signed_message.messageHash.hex(), signed_message.signature.hex()
 
 def createSignableStruct(user_id, user_address, user_amount, delegate_address, leaf):
@@ -198,13 +184,11 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address, l
     crafts a signable struct using - https://github.com/ConsenSys/py-eip712-structs
     '''
     # Make a unique domain seperator - contract address is for the TokenDistributor
-    # verifyingContract='0xBD2525B5F0B2a663439a78A99A06605549D25cE5' # rinkeby leaf fam
-    # verifyingContract='0x40a7e0B6EF7ad50423C166F0CB4e4E9658544aDB' # local testing fam 
     domain = make_domain(
-        name='GTA',
-        version='1.0.0',
-        chainId=4,
-        verifyingContract='0xBD2525B5F0B2a663439a78A99A06605549D25cE5') 
+        name=gtc_sig_app.config.get("DOMAIN_NAME"),
+        version=gtc_sig_app.config.get("DOMAIN_VERSION"),
+        chainId=gtc_sig_app.config.get("DOMAIN_CHAIN_ID"),
+        verifyingContract=gtc_sig_app.config.get("CONTRACT")) 
 
     # Define our struct type
     class Claim(EIP712Struct):
@@ -223,12 +207,9 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address, l
         leaf=leaf)
 
     # Into message JSON - This method converts bytes types for you, which the default JSON encoder won't handle.
-    # claim_msg_json = claim.to_message_json(domain)
-    # claim_msg_bytes = claim.signable_bytes(domain) 
     claim_msg_dict = claim.to_message(domain)
     return claim_msg_dict
 
 if __name__ == '__main__':
     gtc_sig_app.run()
-
 

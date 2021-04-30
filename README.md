@@ -1,27 +1,40 @@
 ## Ethereum Signed Message Service 
 
-ESMS is a flask based HTTPS micro service that accepts metadata and returns an Ethereum signed message. Provided the conditions are met, ESMS will return a valid EIP712 signed message signature and hash with the original metadata. 
+- ESMS was created to distribute GTC tokens to the Gitcoin ecosystem. 
+
+- ESMS is a flask based HTTPS micro service that accepts token claim metadata and returns a signed claim message, merkle leaf, proofs, and original metadata that a user can broadcast to TokenDistributor contract to redeem token claim.  
+
+### Features 
 
 HMAC authentication is used to verify the integrity of sender by requiring a valid HMAC signature in the HTTP headers of the request. 
 
-ESMS was created to distribute GTC tokens to the Gitcoin ecosystem. You can find more info on how ESMS is used in that context 
-[here](https://github.com/nopslip/gov-token/blob/master/info/TOKENDISTRIBUTOR.md). 
 
 ### Setup & Config 
-ESMS v0 is is built to run on Heroku. You should be able to deploy and go.  Some envars are needed though: 
 
-```
-heroku config
-```
+1) create & activate Python virtual environment 
+2) download the repository 
+3) install requirements   
+4) set environmental variables:  
+  - copy sample.env .env and configure accordingly  
+  - two envars are left to be set on the command line:
 
-Returns: 
+    `PRIVATE_KEY` & `GTC_SIG_KEY`
 
-```
-FLASK_ENV:     development
-GTC_SIG_KEY:   E49756B4C8FAB4E48222A3E7F3B97CC3
-PRIVATE_KEY:   e33b70cc2715246e0b5edb49e51d7e05aa6a6a056679204d314932ce22c72edf
-```
+`GTC_SIG_KEY` is the HMAC secret/key 
 
-**where `GTC_SIG_KEY` is for HMAC amd `PRIVATE_KEY` is for Ethereum signed message**
+`PRIVATE_KEY` is the private key to the ETH account used to sign claims (pub key to this private key will be hardcoded into the token distribution contract) 
+
+### Run app 
+
+testing/Dev:
+`flask run`
+
+production:
+`gunicorn app:gtc_sig_app`
+
+
+
+
+
 
 
