@@ -96,13 +96,13 @@ def sign_claim():
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     # make sure user_id is an integer 
     try:
-        int(user_id)
+        user_id = int(user_id)
     except ValueError:
         gtc_sig_app.logger.error('Invalid user_id received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     # make sure it's an int
     try: 
-        int(user_amount)
+        user_amount = int(user_amount)
     except ValueError:
         gtc_sig_app.logger.error('Invalid user_amount received!')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json') 
