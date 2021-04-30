@@ -188,7 +188,7 @@ def createSignableStruct(user_id, user_address, user_amount, delegate_address, l
         name=gtc_sig_app.config.get("DOMAIN_NAME"),
         version=gtc_sig_app.config.get("DOMAIN_VERSION"),
         chainId=gtc_sig_app.config.get("DOMAIN_CHAIN_ID"),
-        verifyingContract=gtc_sig_app.config.get("CONTRACT")) 
+        verifyingContract=gtc_sig_app.config.get("DOMAIN_CONTRACT")) 
 
     # Define our struct type
     class Claim(EIP712Struct):
