@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 load_dotenv('.env')
 
 gtc_sig_app = Flask(__name__)
+logging.basicConfig(filename='request-signer.log', level=logging.DEBUG, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 
 # load our envars 
 gtc_sig_app.config.from_pyfile('setup.py')
