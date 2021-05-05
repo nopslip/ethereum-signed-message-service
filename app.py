@@ -35,8 +35,6 @@ except:
     gtc_sig_app.logger.error(msg)
     raise RuntimeError(msg)
 
-gtc_sig_app.logger.info(gtc_sig_app.config.get("GTC_SIG_KEY"))
-
 @gtc_sig_app.route('/')
 def hello_world():
     return 'WELCOME!'
