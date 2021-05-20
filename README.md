@@ -44,8 +44,6 @@ For reference, this guide for Ubuntu20 was used for our setup: https://certbot.e
 
 > `sudo ln -s /snap/bin/certbot /usr/bin/certbot`
 
-> `sudo snap set certbot trust-plugin-with-root=ok` (can't recall why I needed this. Leaving here for reference)
-
 > `sudo certbot --nginx`
 
 
@@ -60,9 +58,6 @@ For reference, this guide for Ubuntu20 was used for our setup: https://certbot.e
 
 > `source esms_venv/bin/activate`
 
-> `pip install -U Flask`
-
-> `sudo apt-get install gunicorn`
 
 2) download the repository 
 3) install requirements   
@@ -82,8 +77,20 @@ testing/Dev:
 `flask run`
 
 production:
-`gunicorn app:gtc_sig_app`
+start screen session:
+`screen -S esms_prod`
 
+run the app:
+`gunicorn --workers=5 app:gtc_sig_app -b localhost:8000`
+
+detach from the screen session:
+`ctrl a, d`
+
+when you want to reattach, just run:
+`screen -ls`
+
+then reattach with:
+`screen -R esms_prod`
 ### Security Considerations 
 
 1) Restrict access to port 80/443 to only trusted app IP(s) 

@@ -1,5 +1,8 @@
 import os
 
+def shutdown_server(message):
+    ''' Generic function to prevent app from starting.'''
+    raise RuntimeError(message)
 
 if "GTC_SIG_KEY" in os.environ:
     GTC_SIG_KEY = os.environ.get('GTC_SIG_KEY')
@@ -30,8 +33,3 @@ if "DOMAIN_CONTRACT" in os.environ:
     DOMAIN_CONTRACT = os.environ.get('DOMAIN_CONTRACT')
 else:
     shutdown_server('DOMAIN_CONTRACT is required.')
-
-def shutdown_server(message):
-    ''' Generic function to prevent app from starting.'''
-    gtc_sig_app.logger.info(message)
-    raise RuntimeError(message)
