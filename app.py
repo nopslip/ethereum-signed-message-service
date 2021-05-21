@@ -20,9 +20,9 @@ from dotenv import load_dotenv
 load_dotenv('.env')
 
 gtc_sig_app = Flask(__name__)
-logging.basicConfig(filename='request-signer.log', level=logging.DEBUG, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+logging.basicConfig(filename='esms.log', level=logging.INFO, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 
-# load our envars 
+# load our envars
 gtc_sig_app.config.from_pyfile('setup.py')
 
 # load the distribution proofs
@@ -45,9 +45,9 @@ def sign_claim():
     Provided payload of datas including, HMAC signed headers, will return EIP712 compliant 
     struct that a user can use to claim tokens by sending to the a TokenDistributor contract
     '''
-    # IP based restrictions will probably be done at the firewall level
-    ip_address = request.remote_addr
-    gtc_sig_app.logger.info(f'Request IP: {ip_address}')
+    # log x-forward-for and post body for claim
+    ip_address, json_request = request.access_route[0], request.get_json()
+    gtc_sig_app.logger.info(f'IP: {ip_address} REQUEST: {json_request}')
 
     # extract our headers, log headers for debugging
     headers = request.headers
@@ -55,7 +55,7 @@ def sign_claim():
 
     # extract POST data as json, log POST data for debugging
     json_request = request.get_json()
-    gtc_sig_app.logger.debug(f'POST BODY DATA:{json_request}')
+    gtc_sig_app.logger.debug(f'INCOMING POST:{json_request}')
 
     # calc HMAC hash for our POST data, log computed hash for debugging
     computed_hash = create_sha256_signature(gtc_sig_app.config.get("GTC_SIG_KEY"), json.dumps(json_request))
@@ -68,7 +68,7 @@ def sign_claim():
         user_amount = json_request['user_amount']
         delegate_address =  json_request['delegate_address']
     except TypeError:
-        gtc_sig_app.logger.info('Generic POST data TypeError received - confirm required values have been provided in POST payload')
+        gtc_sig_app.logger.error('Generic POST data TypeError received - confirm required values have been provided in POST payload')
         return Response('{"message":"ESMS error"}', status=400, mimetype='application/json')
     except Exception as e:
         gtc_sig_app.logger.error(f'GTC Claim Generator error: {e}')
@@ -125,7 +125,7 @@ def sign_claim():
         gtc_sig_app.logger.debug(f'eth_signed_message_hash_hex: {eth_signed_message_hash_hex}')
         gtc_sig_app.logger.debug(f'eth_sign_message_sig_hex: {eth_signed_signature_hex}')
         gtc_sig_app.logger.debug(f'leaf hash: {leaf}')
-        # gtc_sig_app.logger.debug(f'proof: {proof}')
+        gtc_sig_app.logger.debug(f'proof: {proof}')
        
         return_context = {
             "user_address" : user_address,
