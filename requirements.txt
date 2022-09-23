@@ -28,7 +28,7 @@ multiaddr==0.0.9
 netaddr==0.8.0
 parsimonious==0.8.1
 pi==0.1.2
-protobuf==3.13.0
+protobuf==3.18.3
 pycryptodome==3.9.8
 pyrsistent==0.17.3
 pysha3==1.0.2
